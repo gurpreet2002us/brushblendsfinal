@@ -1,0 +1,21 @@
+{
+  "name": "Brush n Blends - Handcrafted Indian Art",
+  "short_name": "Brush n Blends",
+  "description": "Discover beautiful handcrafted fabric paintings and oil artworks",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d97706",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/brushnblends-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "art"],
+  "lang": "en-IN",
+  "dir": "ltr"
+}
