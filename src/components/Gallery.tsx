@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
 import ArtworkCard from './ArtworkCard';
 import { Artwork } from '../types';
@@ -15,6 +15,12 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    if (medium === 'fabric') {
+      window.scrollTo(0, 0);
+    }
+  }, [medium]);
 
   // Filter artworks based on medium prop and other filters
   const filteredArtworks = useMemo(() => {
@@ -213,6 +219,7 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
                     key={artwork.id}
                     artwork={artwork}
                     onViewDetails={(id) => onNavigate('artwork', id)}
+                    onNavigate={onNavigate}
                   />
                 ))}
               </div>

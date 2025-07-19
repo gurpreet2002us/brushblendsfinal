@@ -223,10 +223,10 @@ export default function CookiePolicyPage({ onNavigate }: CookiePolicyPageProps) 
                 Contact Us
               </button>
               <a
-                href="mailto:privacy@brushnblends.com"
+                href="mailto:support@brushnblends.com"
                 className="px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-orange-600 transition-all duration-200"
               >
-                privacy@brushnblends.com
+                support@brushnblends.com
               </a>
             </div>
           </div>

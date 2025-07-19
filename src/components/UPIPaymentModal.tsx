@@ -223,11 +223,7 @@ export default function UPIPaymentModal({ isOpen, onClose, onSuccess, paymentDat
             <div className="text-center">
               <h3 className="font-semibold text-gray-900 mb-4">Scan QR Code to Pay now</h3>
               <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-4 inline-block">
-                  {console.log(
-        'QR UPI value:',
-        `upi://pay?pa=gurpreet2002us@okicici&pn=Brush n Blends&am=${paymentData.amount}&cu=INR&tn=Order ${paymentData.orderId}`
-      )}
-                 <QRCodeCanvas
+              <QRCodeCanvas
         value={`upi://pay?pa=gurpreet2002us@okicici&pn=Brush n Blends&am=${paymentData.amount}&cu=INR&tn=Order ${paymentData.orderId}`}
         size={200}
         level="H"

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Heart, ShoppingCart, Share2, Ruler, Calendar, Tag, Shield, Clock, Send, X, Eye, ZoomIn } from 'lucide-react';
-import { useCart } from '../hooks/useCart';
-import { useWishlist } from '../hooks/useWishlist';
-import { useOrders } from '../hooks/useOrders';
-import { useSupabase } from '../hooks/useSupabase';
+import { useApp } from '../context/AppContext';
 import { Artwork } from '../types';
 import { useEffect } from 'react';
+import { useOrders } from '../hooks/useOrders';
+import { useSupabase } from '../hooks/useSupabase';
 
 interface ArtworkDetailProps {
   artworkId: string;
@@ -14,10 +13,11 @@ interface ArtworkDetailProps {
 }
 
 export default function ArtworkDetail({ artworkId, onNavigate, artworks }: ArtworkDetailProps) {
-  const { addToCart } = useCart();
-  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { state, addToCart, addToWishlist, removeFromWishlist } = useApp();
+  const wishlist = state.wishlist.map(w => w.artworkId);
+  const user = state.user;
   const { createOrderRequest } = useOrders();
-  const { user } = useSupabase();
+  const { user: supabaseUser } = useSupabase();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -30,6 +30,7 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
     message: ''
   });
   const [appliedCoupon, setAppliedCoupon] = useState<{code: string, discount: number} | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Check for applied coupon in localStorage
   useEffect(() => {
@@ -38,6 +39,10 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
       setAppliedCoupon(JSON.parse(savedCoupon));
     }
   }, []);
+
+  useEffect(() => {
+    if (showOrderForm) setAgreedToTerms(false);
+  }, [showOrderForm]);
 
   const artwork = artworks.find(a => a.id === artworkId);
   
@@ -470,10 +475,23 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
                     />
                   </div>
                   
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={agreedToTerms}
+                      onChange={e => setAgreedToTerms(e.target.checked)}
+                      required
+                      className="rounded border-gray-300 text-amber-600 focus:ring-amber-500 mr-2"
+                    />
+                    <label htmlFor="terms" className="text-sm text-gray-700 select-none">
+                      I agree to the <button type="button" className="underline text-amber-600 hover:text-amber-800" onClick={() => (typeof onNavigate === 'function' ? onNavigate('terms') : window.location.hash = '#/terms')}>Terms & Conditions</button>
+                    </label>
+                  </div>
                   <button
                     type="submit"
-                    disabled={isSubmittingOrder}
-                    className="w-full flex items-center justify-center px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors duration-200"
+                    disabled={isSubmittingOrder || !agreedToTerms}
+                    className="w-full flex items-center justify-center px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmittingOrder ? (
                       <>

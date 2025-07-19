@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, ShoppingCart, Heart, User, Menu, X, Settings } from 'lucide-react';
-import { useCart } from '../hooks/useCart';
-import { useWishlist } from '../hooks/useWishlist';
+import { useApp } from '../context/AppContext';
 import { useArtworks } from '../hooks/useArtworks';
 import { useEffect, useMemo } from 'react';
 import Logo from './Logo';
@@ -15,17 +14,33 @@ interface HeaderProps {
 }
 
 export default function Header({ currentPage, onNavigate, onLogout, user, userProfile }: HeaderProps) {
-  const { cart, cartCount } = useCart();
-  const { wishlist } = useWishlist();
+  const { state } = useApp();
+  const cartCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  const wishlistCount = state.wishlist.length;
   const { artworks } = useArtworks();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [_, setForceUpdate] = useState(0);
+
+  useEffect(() => {
+    setForceUpdate(f => f + 1);
+  }, [cartCount, wishlistCount]);
+
+  useEffect(() => {
+    const handleUpdate = () => setForceUpdate(f => f + 1);
+    window.addEventListener('cartUpdated', handleUpdate);
+    window.addEventListener('wishlistUpdated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('cartUpdated', handleUpdate);
+      window.removeEventListener('wishlistUpdated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
 
   // Use cartCount from useCart hook for real-time updates
-  const wishlistCount = wishlist.length;
-
   const navItems = [
     { id: 'home', label: 'Home' },
       { id: 'about', label: 'About' },

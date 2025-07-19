@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { User, CartItem, WishlistItem, Artwork } from '../types';
 import { mockArtworks } from '../data/mockData';
+import { supabase } from '../lib/supabase';
 
 interface AppState {
   user: User | null;
@@ -40,6 +41,12 @@ const initialState: AppState = {
 const AppContext = createContext<{
   state: AppState;
   dispatch: React.Dispatch<AppAction>;
+  addToCart: (artwork: Artwork, quantity?: number) => Promise<{ error: any } | { error: null }>;
+  removeFromCart: (artworkId: string) => Promise<void>;
+  updateCartQuantity: (artworkId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
+  addToWishlist: (artworkId: string) => Promise<void>;
+  removeFromWishlist: (artworkId: string) => Promise<void>;
 } | null>(null);
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -130,8 +137,111 @@ function appReducer(state: AppState, action: AppAction): AppState {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
+  // --- CART HELPERS ---
+  const addToCart = async (artwork: Artwork, quantity: number = 1) => {
+    if (state.user) {
+      // Logged in: update Supabase
+      const { error } = await supabase
+        .from('cart')
+        .upsert({ user_id: state.user.id, artwork_id: artwork.id, quantity }, { onConflict: 'user_id,artwork_id', ignoreDuplicates: false });
+      if (!error) dispatch({ type: 'ADD_TO_CART', payload: artwork });
+      return { error };
+    } else {
+      // Guest: update context and localStorage
+      dispatch({ type: 'ADD_TO_CART', payload: artwork });
+      const guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+      const existing = guestCart.find((item: any) => item.artwork.id === artwork.id);
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        guestCart.push({ artwork, quantity });
+      }
+      localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      return { error: null };
+    }
+  };
+
+  const removeFromCart = async (artworkId: string) => {
+    if (state.user) {
+      await supabase.from('cart').delete().eq('user_id', state.user.id).eq('artwork_id', artworkId);
+      dispatch({ type: 'REMOVE_FROM_CART', payload: artworkId });
+    } else {
+      dispatch({ type: 'REMOVE_FROM_CART', payload: artworkId });
+      let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+      guestCart = guestCart.filter((item: any) => item.artwork.id !== artworkId);
+      localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+      window.dispatchEvent(new Event('cartUpdated'));
+    }
+  };
+
+  const updateCartQuantity = async (artworkId: string, quantity: number) => {
+    if (state.user) {
+      await supabase.from('cart').update({ quantity }).eq('user_id', state.user.id).eq('artwork_id', artworkId);
+      dispatch({ type: 'UPDATE_CART_QUANTITY', payload: { id: artworkId, quantity } });
+    } else {
+      let guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+      guestCart = guestCart.map((item: any) => item.artwork.id === artworkId ? { ...item, quantity } : item);
+      localStorage.setItem('guest_cart', JSON.stringify(guestCart));
+      dispatch({ type: 'UPDATE_CART_QUANTITY', payload: { id: artworkId, quantity } });
+      window.dispatchEvent(new Event('cartUpdated'));
+    }
+  };
+
+  const clearCart = async () => {
+    if (state.user) {
+      await supabase.from('cart').delete().eq('user_id', state.user.id);
+      dispatch({ type: 'CLEAR_CART' });
+    } else {
+      dispatch({ type: 'CLEAR_CART' });
+      localStorage.removeItem('guest_cart');
+      window.dispatchEvent(new Event('cartUpdated'));
+    }
+  };
+
+  // --- WISHLIST HELPERS ---
+  const addToWishlist = async (artworkId: string) => {
+    if (state.user) {
+      await supabase.from('wishlist').insert({ user_id: state.user.id, artwork_id: artworkId });
+      dispatch({ type: 'ADD_TO_WISHLIST', payload: artworkId });
+    } else {
+      dispatch({ type: 'ADD_TO_WISHLIST', payload: artworkId });
+      const guestWishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+      if (!guestWishlist.includes(artworkId)) guestWishlist.push(artworkId);
+      localStorage.setItem('guest_wishlist', JSON.stringify(guestWishlist));
+      window.dispatchEvent(new Event('wishlistUpdated'));
+    }
+  };
+
+  const removeFromWishlist = async (artworkId: string) => {
+    if (state.user) {
+      await supabase.from('wishlist').delete().eq('user_id', state.user.id).eq('artwork_id', artworkId);
+      dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: artworkId });
+    } else {
+      dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: artworkId });
+      let guestWishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+      guestWishlist = guestWishlist.filter((id: string) => id !== artworkId);
+      localStorage.setItem('guest_wishlist', JSON.stringify(guestWishlist));
+      window.dispatchEvent(new Event('wishlistUpdated'));
+    }
+  };
+
+  // --- INIT: Load guest cart/wishlist on mount if not logged in ---
+  React.useEffect(() => {
+    if (!state.user) {
+      const guestCart = JSON.parse(localStorage.getItem('guest_cart') || '[]');
+      guestCart.forEach((item: any) => {
+        for (let i = 0; i < item.quantity; i++) {
+          dispatch({ type: 'ADD_TO_CART', payload: item.artwork });
+        }
+      });
+      const guestWishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+      guestWishlist.forEach((id: string) => dispatch({ type: 'ADD_TO_WISHLIST', payload: id }));
+    }
+  }, [state.user]);
+
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={{ state, dispatch, addToCart, removeFromCart, updateCartQuantity, clearCart, addToWishlist, removeFromWishlist }}>
       {children}
     </AppContext.Provider>
   );

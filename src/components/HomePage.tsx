@@ -231,6 +231,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                   <ArtworkCard
                     artwork={artwork}
                     onViewDetails={(id) => onNavigate('artwork', id)}
+                    onNavigate={onNavigate}
                   />
                 </div>
               ))
@@ -267,7 +268,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="group relative cursor-pointer" onClick={() => onNavigate('fabric')}>
+            <div className="group relative cursor-pointer" onClick={() => { onNavigate('fabric'); window.scrollTo(0,0); }}>
               <div className="relative overflow-hidden rounded-2xl shadow-2xl">
                 <img
                   src="https://telxrnjmmvhmmryfqxuo.supabase.co/storage/v1/object/public/images/artwork-images/1752063861593-4rm83xh09zm.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"

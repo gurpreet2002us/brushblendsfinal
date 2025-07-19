@@ -33,6 +33,8 @@ export function useWishlist() {
   const saveGuestWishlist = (wishlistItems: string[]) => {
     try {
       localStorage.setItem('guest_wishlist', JSON.stringify(wishlistItems));
+      setWishlist([...wishlistItems]); // Force update for all hook instances
+      window.dispatchEvent(new Event('wishlistUpdated'));
     } catch (error) {
       console.error('Error saving guest wishlist:', error);
     }

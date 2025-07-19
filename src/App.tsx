@@ -48,6 +48,10 @@ function AppContent() {
     }
   }, [user]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
+
   const handleNavigate = (page: string, id?: string) => {
     if (page === 'login') {
       setAuthMode('login');
@@ -69,9 +73,8 @@ function AppContent() {
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
-    // Small delay to ensure user profile is loaded
     setTimeout(() => {
-      setCurrentPage('profile'); // Redirect to dashboard after login
+      setCurrentPage('home'); // Redirect to home after login
     }, 500);
   };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, X } from 'lucide-react';
 import { useEffect } from 'react';
-import { useCart } from '../hooks/useCart';
+import { useApp } from '../context/AppContext';
 import { useSupabase } from '../hooks/useSupabase';
 import { useCoupons } from '../hooks/useCoupons';
 
@@ -10,7 +10,8 @@ interface CartProps {
 }
 
 export default function Cart({ onNavigate }: CartProps) {
-  const { cart, updateCartQuantity, removeFromCart } = useCart();
+  const { state, updateCartQuantity, removeFromCart } = useApp();
+  const cart = state.cart;
   const { user } = useSupabase();
   const { validateCoupon } = useCoupons();
   const [couponCode, setCouponCode] = useState('');
@@ -48,7 +49,11 @@ export default function Cart({ onNavigate }: CartProps) {
       localStorage.setItem('appliedCoupon', JSON.stringify(couponData));
       setCouponCode('');
     } else {
-      setCouponError(result.error || 'Invalid coupon code');
+      if (result.error === 'login_required') {
+        setCouponError('Please log in to apply a coupon.');
+      } else if (result.error) {
+        setCouponError(result.error);
+      }
     }
   };
 
@@ -96,7 +101,7 @@ export default function Cart({ onNavigate }: CartProps) {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cart.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-md p-6">
+              <div key={item.artwork.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-shrink-0">
                     <img
@@ -127,7 +132,7 @@ export default function Cart({ onNavigate }: CartProps) {
                         </span>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.artwork.id)}
                         className="p-2 text-gray-400 hover:text-red-500 transition-colors duration-200"
                       >
                         <Trash2 className="h-5 w-5" />
@@ -137,7 +142,7 @@ export default function Cart({ onNavigate }: CartProps) {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center space-x-3">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.artwork.id, item.quantity - 1)}
                           className="p-1 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200"
                         >
                           <Minus className="h-4 w-4" />
@@ -146,7 +151,7 @@ export default function Cart({ onNavigate }: CartProps) {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.artwork.id, item.quantity + 1)}
                           disabled={item.quantity >= item.artwork.stockCount}
                           className="p-1 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -210,7 +215,7 @@ export default function Cart({ onNavigate }: CartProps) {
                       </button>
                     </div>
                     {couponError && (
-                      <p className="text-xs text-red-600">{couponError}</p>
+                      <div className="text-red-600 text-xs mt-2">{couponError}</div>
                     )}
                     <p className="text-xs text-gray-500">Try: BB202510 for 10% off</p>
                   </div>

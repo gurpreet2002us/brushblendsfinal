@@ -19,15 +19,15 @@ export default function Footer({ onNavigate }: FooterProps) {
               Each piece is carefully created to bring beauty and emotion to your space.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-amber-500 transition-colors duration-200">
+              <a href="https://www.facebook.com/share/1ENvyjjDzD/" className="text-gray-400 hover:text-amber-500 transition-colors duration-200">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-amber-500 transition-colors duration-200">
+              <a href="https://www.instagram.com/brush_n_blends/profilecard/?igsh=bjdibzAxdm9zdjdt" className="text-gray-400 hover:text-amber-500 transition-colors duration-200">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-amber-500 transition-colors duration-200">
+              {/* <a href="#" className="text-gray-400 hover:text-amber-500 transition-colors duration-200">
                 <Twitter className="h-5 w-5" />
-              </a>
+              </a> */}
             </div>
           </div>
 
@@ -73,8 +73,8 @@ export default function Footer({ onNavigate }: FooterProps) {
               <div className="flex items-start space-x-3">
                 <MapPin className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <div className="text-gray-300 text-sm">
-                  <p>53/1, Near Old Water Tank</p>
-                  <p>Awas Vikas</p>
+                  <p>H. No. 42, Ganga Lane</p>
+                  <p>Vim Square, Kichha Road</p>
                   <p>Rudrapur, Uttarakhand 263153</p>
                   <p>India</p>
                 </div>
@@ -90,8 +90,8 @@ export default function Footer({ onNavigate }: FooterProps) {
               <h5 className="text-sm font-medium text-gray-400 mb-2">We Accept</h5>
               <div className="flex items-center space-x-4">
                 <span className="text-xs bg-gray-800 px-2 py-1 rounded">UPI</span>
-                <span className="text-xs bg-gray-800 px-2 py-1 rounded">Cards</span>
-                <span className="text-xs bg-gray-800 px-2 py-1 rounded">Net Banking</span>
+                {/* <span className="text-xs bg-gray-800 px-2 py-1 rounded">Cards</span>
+                <span className="text-xs bg-gray-800 px-2 py-1 rounded">Net Banking</span> */}
               </div>
             </div>
             <div className="text-center md:text-right">

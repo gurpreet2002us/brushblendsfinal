@@ -1,21 +1,21 @@
 import React from 'react';
 import { Heart, ShoppingCart, Eye, Clock, Send, X } from 'lucide-react';
 import { Artwork } from '../types';
-import { useCart } from '../hooks/useCart';
-import { useWishlist } from '../hooks/useWishlist';
-import { useSupabase } from '../hooks/useSupabase';
+import { useApp } from '../context/AppContext';
 import { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
+import ReactDOM from 'react-dom';
 
 interface ArtworkCardProps {
   artwork: Artwork;
   onViewDetails: (id: string) => void;
+  onNavigate?: (page: string) => void;
 }
 
-export default function ArtworkCard({ artwork, onViewDetails }: ArtworkCardProps) {
-  const { addToCart } = useCart();
-  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const { user } = useSupabase();
+export default function ArtworkCard({ artwork, onViewDetails, onNavigate }: ArtworkCardProps) {
+  const { state, addToCart, addToWishlist, removeFromWishlist } = useApp();
+  const wishlist = state.wishlist.map(w => w.artworkId);
+  const user = state.user;
   const [appliedCoupon, setAppliedCoupon] = useState<{code: string, discount: number} | null>(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -27,6 +27,7 @@ export default function ArtworkCard({ artwork, onViewDetails }: ArtworkCardProps
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const { createOrderRequest } = useOrders();
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Check for applied coupon in localStorage
   useEffect(() => {
@@ -39,6 +40,10 @@ export default function ArtworkCard({ artwork, onViewDetails }: ArtworkCardProps
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (showOrderModal) setAgreedToTerms(false);
+  }, [showOrderModal]);
 
   const isInWishlist = wishlist.includes(artwork.id);
   // Calculate discounted price if coupon is applied
@@ -257,8 +262,8 @@ export default function ArtworkCard({ artwork, onViewDetails }: ArtworkCardProps
       </div>
 
       {/* Order Request Modal */}
-      {showOrderModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {showOrderModal && ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
@@ -328,10 +333,23 @@ export default function ArtworkCard({ artwork, onViewDetails }: ArtworkCardProps
                   />
                 </div>
                 
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={e => setAgreedToTerms(e.target.checked)}
+                    required
+                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500 mr-2"
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-700 select-none">
+                    I agree to the <button type="button" className="underline text-amber-600 hover:text-amber-800" onClick={() => (onNavigate ? onNavigate('terms') : window.location.hash = '#/terms')}>Terms & Conditions</button>
+                  </label>
+                </div>
                 <button
                   type="submit"
-                  disabled={isSubmittingOrder}
-                  className="w-full flex items-center justify-center px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors duration-200 disabled:opacity-50"
+                  disabled={isSubmittingOrder || !agreedToTerms}
+                  className="w-full flex items-center justify-center px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmittingOrder ? (
                     <>
@@ -348,7 +366,8 @@ export default function ArtworkCard({ artwork, onViewDetails }: ArtworkCardProps
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -80,6 +80,8 @@ export function useCart() {
     try {
       localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cartItems));
       updateCartCount(cartItems);
+      setCart([...cartItems]); // Force update for all hook instances
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error saving guest cart:', error);
     }

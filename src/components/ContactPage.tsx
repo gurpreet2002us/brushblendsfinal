@@ -292,8 +292,8 @@ export default function ContactPage({ onNavigate }: ContactPageProps) {
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
                       <p className="text-gray-600">
-                        53/1, Near Old Water Tank<br />
-                        Awas Vikas<br />
+                        H. No. 42, Ganga Lane <br />
+                        Vim Square, Kichha Road<br />
                         Rudrapur, Uttarakhand 263153<br />
                         India
                       </p>

@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useSupabase } from './useSupabase';
 
 export function useCoupons() {
+  const { user } = useSupabase();
   const [loading, setLoading] = useState(false);
 
   async function validateCoupon(code: string) {
+    if (!user) {
+      return { valid: false, error: 'login_required' };
+    }
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -55,11 +60,18 @@ export function useCoupons() {
 
   async function incrementCouponUsage(code: string) {
     try {
+      // Fetch current used_count
+      const { data, error: fetchError } = await supabase
+        .from('coupons')
+        .select('used_count')
+        .eq('code', code)
+        .maybeSingle();
+      if (fetchError) return { error: fetchError };
+      const newCount = (data?.used_count || 0) + 1;
       const { error } = await supabase
         .from('coupons')
-        .update({ used_count: supabase.sql`used_count + 1` })
+        .update({ used_count: newCount })
         .eq('code', code);
-
       return { error };
     } catch (err) {
       return { error: err instanceof Error ? err.message : 'An error occurred' };

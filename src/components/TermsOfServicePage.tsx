@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Scale, ShoppingCart, Truck, RotateCcw, AlertTriangle } from 'lucide-react';
+import { FileText, Scale, ShoppingCart, Truck, RotateCcw, AlertTriangle, Clock } from 'lucide-react';
 
 interface TermsOfServicePageProps {
   onNavigate: (page: string) => void;
@@ -36,6 +36,11 @@ export default function TermsOfServicePage({ onNavigate }: TermsOfServicePagePro
       title: 'Intellectual Property',
       icon: AlertTriangle,
       content: 'All content on this website, including images, text, designs, and artwork, is protected by copyright and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our written permission.'
+    },
+    {
+      title: 'Delivery of Out-of-Stock and Custom Orders',
+      icon: Clock,
+      content: 'For out-of-stock and custom orders, delivery timelines and arrangements will be determined based on the specific order details. Our team will discuss and confirm the expected delivery time with you directly via phone call during the order consultation process.'
     }
   ];
 
@@ -110,31 +115,6 @@ export default function TermsOfServicePage({ onNavigate }: TermsOfServicePagePro
                 Our liability is limited to the maximum extent permitted by law. 
                 We are not liable for indirect, incidental, or consequential damages.
               </p>
-            </div>
-          </div>
-
-          {/* Warranty and Quality */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Quality Guarantee</h3>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Our Promise</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li>• Authentic handcrafted artworks</li>
-                  <li>• Quality materials and techniques</li>
-                  <li>• Careful packaging and shipping</li>
-                  <li>• Certificate of authenticity</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Warranty Coverage</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li>• Manufacturing defects</li>
-                  <li>• Damage during shipping</li>
-                  <li>• Color variations from display</li>
-                  <li>• Authenticity guarantee</li>
-                </ul>
-              </div>
             </div>
           </div>
 
