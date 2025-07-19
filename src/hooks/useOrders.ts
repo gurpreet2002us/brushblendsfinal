@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useSupabase } from './useSupabase';
+import { sendEmail } from '../utils/email';
 //import { sendEmail, sendWhatsApp } from '../utils/notifications';
 
 export interface OrderData {
@@ -107,12 +108,14 @@ export function useOrders() {
       // Email and WhatsApp notifications
       const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
       // User email
-      await sendEmail({
-        to: user.email,
-        subject: 'Order Confirmation',
-        text: `Thank you for your order! Your order ID is ${data.id}.`,
-        html: `<p>Thank you for your order! Your order ID is <b>${data.id}</b>.</p>`,
-      });
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: 'Order Confirmation',
+          text: `Thank you for your order! Your order ID is ${data.id}.`,
+          html: `<p>Thank you for your order! Your order ID is <b>${data.id}</b>.</p>`,
+        });
+      }
       // Admin email
       if (adminEmail) {
         await sendEmail({
@@ -123,13 +126,7 @@ export function useOrders() {
         });
       }
       // WhatsApp to user (if phone available)
-      const phone = orderData.shippingAddress?.phone;
-      if (typeof phone === 'string' && phone.trim().length > 0) {
-        await sendWhatsApp({
-          to: phone as string,
-          body: `Thank you for your order! Your order ID is ${data.id}.`,
-        });
-      }
+      // (sendWhatsApp removed)
       // Refresh orders list
       await fetchUserOrders();
       // Notify admin dashboard (if needed)
@@ -201,6 +198,7 @@ export function useOrders() {
     shipping_address?: string;
   }) {
     try {
+      console.log('[createOrderRequest] Submitting order:', requestData);
       setLoading(true);
       const { data, error } = await supabase
         .from('order_requests')
@@ -214,14 +212,46 @@ export function useOrders() {
         })
         .select()
         .single();
-
+      console.log('[createOrderRequest] Supabase response:', { data, error });
       if (error) throw error;
 
-      // Send WhatsApp notification for order request
+      // Fetch artwork title for email
+      let artworkTitle = '';
+      try {
+        const { data: artwork } = await supabase
+          .from('artworks')
+          .select('title')
+          .eq('id', artworkId)
+          .maybeSingle();
+        artworkTitle = artwork?.title || '';
+      } catch {}
+
+      // Send email to user
+      if (data && data.email) {
+        await sendEmail({
+          to: data.email,
+          subject: 'Order Request Received',
+          text: `Thank you for your order request for '${artworkTitle}'. We will contact you soon.`,
+          html: `<p>Thank you for your order request for <b>${artworkTitle}</b>. We will contact you soon.</p>`,
+        });
+      }
+      // Send email to admin
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+      if (adminEmail) {
+        await sendEmail({
+          to: adminEmail,
+          subject: 'New Order Request',
+          text: `A new order request has been submitted for '${artworkTitle}' by ${data.name} (${data.email}, ${data.phone}).`,
+          html: `<p>A new order request has been submitted for <b>${artworkTitle}</b> by <b>${data.name}</b> (${data.email}, ${data.phone}).</p>`,
+        });
+      }
+
+      // Send WhatsApp notification for order request (existing logic)
       await sendOrderRequestNotifications(data, artworkId);
 
       return { data, error: null };
     } catch (err) {
+      console.error('[createOrderRequest] Error:', err);
       return { error: err instanceof Error ? err.message : 'An error occurred' };
     } finally {
       setLoading(false);
