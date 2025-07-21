@@ -23,7 +23,7 @@ export interface Artwork {
 export interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   address?: {
     street: string;

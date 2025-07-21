@@ -59,12 +59,12 @@ function normalizeEmail(email: string | null | undefined): string | null {
 async function createUserProfile(user: User) {
   try {
     const { error } = await supabase
-      .from('user_profiles')
-      .insert({
-        id: user.id,
-        name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+    .from('user_profiles')
+    .insert({
+      id: user.id,
+      name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
         email: normalizeEmail(user.email) // Always save normalized email
-      });
+    });
     
     if (error && error.code !== '23505') { // Ignore duplicate key errors
       console.error('Error creating user profile:', error);

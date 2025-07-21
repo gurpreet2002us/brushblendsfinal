@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { useSupabase } from './hooks/useSupabase';
+import React, { useState, useEffect } from 'react';
+import { useSupabase, getUserProfile, signOut } from './hooks/useSupabase';
 import { useArtworks } from './hooks/useArtworks';
-import { getUserProfile, signOut } from './hooks/useSupabase';
-import { useEffect } from 'react';
+import { AppProvider, useApp } from './context/AppContext';
 import Header from './components/Header';
 import HomePage from './components/HomePage';
 import Gallery from './components/Gallery';
@@ -30,6 +29,7 @@ type Page = 'home' | 'gallery' | 'fabric' | 'oil' | 'handcraft' | 'about' | 'con
 
 function AppContent() {
   const { user, loading: authLoading } = useSupabase();
+  const { dispatch } = useApp();
   const { artworks, loading: artworksLoading, error: artworksError } = useArtworks();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -37,16 +37,33 @@ function AppContent() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Load user profile when user changes
+  // Sync supabase user with app context and fetch profile
   useEffect(() => {
     if (user) {
-      getUserProfile(user.id).then(({ data }) => {
-        setUserProfile(data);
+      getUserProfile(user.id).then(({ data: profileData }) => {
+        if (profileData) {
+          const combinedUser = {
+            ...user,
+            ...profileData
+          };
+          dispatch({ type: 'SET_USER', payload: combinedUser });
+          setUserProfile(profileData);
+        } else {
+          // If profile doesn't exist, use Supabase user but add default fields
+          const defaultUser = {
+            ...user,
+            name: user.email?.split('@')[0] || 'New User', // A sensible default
+            isAdmin: false
+          };
+          dispatch({ type: 'SET_USER', payload: defaultUser });
+          setUserProfile(null);
+        }
       });
     } else {
+      dispatch({ type: 'SET_USER', payload: null });
       setUserProfile(null);
     }
-  }, [user]);
+  }, [user, dispatch]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -69,6 +86,11 @@ function AppContent() {
     if (page !== 'artwork') {
       setSelectedArtworkId(null);
     }
+  };
+
+  const handleShowAuthModal = () => {
+    setAuthMode('login');
+    setShowAuthModal(true);
   };
 
   const handleAuthSuccess = () => {
@@ -100,20 +122,20 @@ function AppContent() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home':
-        return <HomePage onNavigate={handleNavigate} />;
+        return <HomePage onNavigate={handleNavigate} onShowAuthModal={handleShowAuthModal} />;
       case 'gallery':
-        return <Gallery onNavigate={handleNavigate} artworks={artworks} />;
+        return <Gallery onNavigate={handleNavigate} onShowAuthModal={handleShowAuthModal} />;
       case 'fabric':
-        return <Gallery onNavigate={handleNavigate} medium="fabric" artworks={artworks} />;
+        return <Gallery onNavigate={handleNavigate} category="Fabric Painting" onShowAuthModal={handleShowAuthModal} />;
       case 'oil':
-        return <Gallery onNavigate={handleNavigate} medium="oil" artworks={artworks} />;
+        return <Gallery onNavigate={handleNavigate} category="Oil Painting" onShowAuthModal={handleShowAuthModal} />;
       case 'handcraft':
-        return <Gallery onNavigate={handleNavigate} medium="handcraft" artworks={artworks} />;
+        return <Gallery onNavigate={handleNavigate} category="Handcraft" onShowAuthModal={handleShowAuthModal} />;
       case 'artwork':
         return selectedArtworkId ? (
           <ArtworkDetail artworkId={selectedArtworkId} onNavigate={handleNavigate} artworks={artworks} />
         ) : (
-          <HomePage onNavigate={handleNavigate} />
+          <HomePage onNavigate={handleNavigate} onShowAuthModal={handleShowAuthModal} />
         );
       case 'cart':
         return <Cart onNavigate={handleNavigate} />;
@@ -148,7 +170,7 @@ function AppContent() {
       case 'database-test':
         return <DatabaseTest />;
       default:
-        return <HomePage onNavigate={handleNavigate} />;
+        return <HomePage onNavigate={handleNavigate} onShowAuthModal={handleShowAuthModal} />;
     }
   };
 
@@ -179,7 +201,9 @@ function AppContent() {
 
 function App() {
   return (
-    <AppContent />
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 

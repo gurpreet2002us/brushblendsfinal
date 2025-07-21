@@ -2,69 +2,83 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
 import ArtworkCard from './ArtworkCard';
 import { Artwork } from '../types';
+import { useArtworks } from '../hooks/useArtworks';
 
 interface GalleryProps {
-  onNavigate: (page: string, id?: string) => void;
-  medium?: 'fabric' | 'oil' | 'handcraft';
-  artworks: Artwork[];
+  category?: string | null;
+  onNavigate: (page: string, data?: any) => void;
+  onShowAuthModal: () => void;
 }
 
-export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price-low' | 'price-high' | 'featured'>('featured');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+export default function Gallery({ category, onNavigate, onShowAuthModal }: GalleryProps) {
+  const { artworks, loading } = useArtworks();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('featured');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  useEffect(() => {
-    if (medium === 'fabric') {
-      window.scrollTo(0, 0);
-    }
-  }, [medium]);
-
-  // Filter artworks based on medium prop and other filters
   const filteredArtworks = useMemo(() => {
     let filtered = artworks;
 
-    // Filter by medium if specified
-    if (medium) {
-      filtered = filtered.filter(artwork => artwork.medium === medium);
-    }
-
-    // Filter by price range
-    filtered = filtered.filter(artwork => 
-      artwork.price >= priceRange[0] && artwork.price <= priceRange[1]
-    );
-
-    // Filter by categories
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(artwork => 
-        selectedCategories.includes(artwork.category)
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(artwork =>
+        artwork.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        artwork.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    return filtered;
-  }, [artworks, medium, priceRange, selectedCategories]);
-
-  // Sort artworks
-  const sortedArtworks = useMemo(() => {
-    const sorted = [...filteredArtworks];
-    
-    switch (sortBy) {
-      case 'newest':
-        return sorted.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
-      case 'oldest':
-        return sorted.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
-      case 'price-low':
-        return sorted.sort((a, b) => a.price - b.price);
-      case 'price-high':
-        return sorted.sort((a, b) => b.price - a.price);
-      case 'featured':
-        return sorted.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-      default:
-        return sorted;
+    // Filter by category if specified
+    if (category) {
+      filtered = filtered.filter(artwork => artwork.category.toLowerCase() === category.toLowerCase());
     }
-  }, [filteredArtworks, sortBy]);
+
+    // Filter by price range
+    filtered = filtered.filter(artwork => artwork.price >= priceRange[0] && artwork.price <= priceRange[1]);
+
+    return filtered;
+  }, [artworks, searchTerm, category, priceRange]);
+
+  const sortedArtworks = useMemo(() => {
+    let sortable = [...filteredArtworks];
+    switch (sortOrder) {
+      case 'newest':
+        sortable.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+        break;
+      case 'oldest':
+        sortable.sort((a, b) => new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime());
+        break;
+      case 'price-low':
+        sortable.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        sortable.sort((a, b) => b.price - a.price);
+        break;
+      case 'featured':
+        sortable.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        break;
+      default:
+        break;
+    }
+    return sortable;
+  }, [filteredArtworks, sortOrder]);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const totalPages = Math.ceil(sortedArtworks.length / itemsPerPage);
+  const paginatedArtworks = sortedArtworks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    if (category === 'Fabric Painting') {
+      window.scrollTo(0, 0);
+    }
+  }, [category]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -81,18 +95,32 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
   };
 
   const getTitle = () => {
-    if (medium === 'fabric') return 'Fabric Paintings';
-    if (medium === 'oil') return 'Oil Paintings';
-    if (medium === 'handcraft') return 'Handcraft Items';
+    if (category) {
+      // Capitalize first letter
+      return category.charAt(0).toUpperCase() + category.slice(1) + 's';
+    }
     return 'Art Gallery';
   };
 
   const getDescription = () => {
-    if (medium === 'fabric') return 'Discover our collection of intricate fabric paintings with embroidery and beadwork';
-    if (medium === 'oil') return 'Explore our classic oil paintings with rich colors and masterful techniques';
-    if (medium === 'handcraft') return 'Browse our unique handcrafted items including sculptures, carvings, and decorative pieces';
+    if (category === 'fabric') return 'Discover our collection of intricate fabric paintings with embroidery and beadwork';
+    if (category === 'oil') return 'Explore our classic oil paintings with rich colors and masterful techniques';
+    if (category === 'handcraft') return 'Browse our unique handcrafted items including sculptures, carvings, and decorative pieces';
     return 'Browse our complete collection of handcrafted artworks';
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Loading artworks...</h3>
+            <p className="text-gray-600">Please wait while we fetch the data.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -119,8 +147,8 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
             
             <div className="flex items-center space-x-4">
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as any)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               >
                 <option value="featured">Featured First</option>
@@ -162,7 +190,7 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
                 <input
                   type="range"
                   min="0"
-                  max="5000"
+                  max="50000"
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
                   className="w-full"
@@ -190,7 +218,7 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
               {/* Clear Filters */}
               <button
                 onClick={() => {
-                  setPriceRange([0, 5000]);
+                  setPriceRange([0, 50000]);
                   setSelectedCategories([]);
                 }}
                 className="w-full px-4 py-2 text-sm text-amber-600 border border-amber-600 rounded-lg hover:bg-amber-50 transition-colors duration-200"
@@ -202,7 +230,7 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
 
           {/* Artworks Grid */}
           <div className="flex-1">
-            {sortedArtworks.length === 0 ? (
+            {paginatedArtworks.length === 0 ? (
               <div className="text-center py-12">
                 <Filter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No artworks found</h3>
@@ -214,12 +242,13 @@ export default function Gallery({ onNavigate, medium, artworks }: GalleryProps) 
                   ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
                   : 'grid-cols-1'
               }`}>
-                {sortedArtworks.map((artwork) => (
+                {paginatedArtworks.map((artwork) => (
                   <ArtworkCard
                     key={artwork.id}
                     artwork={artwork}
-                    onViewDetails={(id) => onNavigate('artwork', id)}
+                    onViewDetails={(id: string) => onNavigate('artwork', id)}
                     onNavigate={onNavigate}
+                    onShowAuthModal={onShowAuthModal}
                   />
                 ))}
               </div>

@@ -10,9 +10,10 @@ interface ArtworkCardProps {
   artwork: Artwork;
   onViewDetails: (id: string) => void;
   onNavigate?: (page: string) => void;
+  onShowAuthModal: () => void;
 }
 
-export default function ArtworkCard({ artwork, onViewDetails, onNavigate }: ArtworkCardProps) {
+export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShowAuthModal }: ArtworkCardProps) {
   const { state, addToCart, addToWishlist, removeFromWishlist } = useApp();
   const wishlist = state.wishlist.map(w => w.artworkId);
   const user = state.user;
@@ -100,7 +101,7 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate }: Artw
         setShowOrderModal(false);
         setOrderFormData({ name: '', email: '', phone: '', message: '' });
       } else {
-        alert('Error submitting order request. Please try again.');
+        alert('Error submitting order request. Please try againn.');
       }
     } catch (error) {
       console.error('Error submitting order request:', error);
@@ -112,7 +113,15 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate }: Artw
 
   const handleOutOfStockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowOrderModal(true);
+    if (!user) {
+      if (onShowAuthModal) {
+        onShowAuthModal();
+      } else {
+        alert('Please log in to request an order.');
+      }
+    } else {
+      setShowOrderModal(true);
+    }
   };
 
   const getMediumBadgeColor = () => {

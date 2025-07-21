@@ -4,10 +4,11 @@ import { useArtworks } from '../hooks/useArtworks';
 import ArtworkCard from './ArtworkCard';
 
 interface HomePageProps {
-  onNavigate: (page: string, id?: string) => void;
+  onNavigate: (page: string, data?: any) => void;
+  onShowAuthModal: () => void;
 }
 
-export default function HomePage({ onNavigate }: HomePageProps) {
+export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps) {
   const { artworks, loading } = useArtworks();
   const featuredArtworks = artworks.filter(artwork => artwork.featured);
   const [showCouponToast, setShowCouponToast] = useState(true);
@@ -232,6 +233,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                     artwork={artwork}
                     onViewDetails={(id) => onNavigate('artwork', id)}
                     onNavigate={onNavigate}
+                    onShowAuthModal={onShowAuthModal}
                   />
                 </div>
               ))

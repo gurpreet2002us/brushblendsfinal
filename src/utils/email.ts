@@ -1,13 +1,31 @@
-import { Resend } from 'resend';
+// src/utils/email.ts
 
-const resend = new Resend(import.meta.env.VITE_RESEND_API_KEY);
+export async function sendEmail({
+  to,
+  subject,
+  text,
+  html,
+}: {
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}) {
+  const response = await fetch('/api/sendNotification', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      toEmail: to,
+      subject,
+      text,
+      html,
+    }),
+  });
 
-export async function sendEmail({ to, subject, text, html }: { to: string, subject: string, text?: string, html?: string }) {
-  return resend.emails.send({
-    from: 'Brush n Blends <support@brushnblends.com>',
-    to: [to],
-    subject,
-    ...(text ? { text } : {}),
-    ...(html ? { html } : {}),
-  } as any);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to send email');
+  }
+
+  return await response.json();
 } 

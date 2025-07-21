@@ -150,7 +150,7 @@ export default function AuthModal({ isOpen, onClose, mode, onModeChange, onSucce
           </div>
 
           {/* Social Login */}
-          <div className="space-y-3 mb-6">
+          {/* <div className="space-y-3 mb-6">
             <button
               onClick={() => handleSocialLogin('google')}
               disabled={isLoading}
@@ -180,7 +180,7 @@ export default function AuthModal({ isOpen, onClose, mode, onModeChange, onSucce
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-white text-gray-500">Or continue with email</span>
             </div>
-          </div>
+          </div> */}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
