@@ -5,7 +5,10 @@ import App from './App.tsx';
 import { AppProvider } from './context/AppContext.tsx';
 import './index.css';
 
-createRoot(document.getElementById('root')!).render(
+// For React Router v6+
+const root = createRoot(document.getElementById('root')!);
+
+root.render(
   <StrictMode>
     <BrowserRouter>
       <AppProvider>

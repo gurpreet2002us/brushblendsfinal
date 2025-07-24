@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
-// Using direct URL access instead of react-router hooks for better compatibility
 import ArtworkCard from './ArtworkCard';
 import { useArtworks } from '../hooks/useArtworks';
 
