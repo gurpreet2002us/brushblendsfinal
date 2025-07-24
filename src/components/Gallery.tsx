@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
+// Using direct URL access instead of react-router hooks for better compatibility
 import ArtworkCard from './ArtworkCard';
-import { Artwork } from '../types';
 import { useArtworks } from '../hooks/useArtworks';
 
 interface GalleryProps {
@@ -10,14 +10,40 @@ interface GalleryProps {
   onShowAuthModal: () => void;
 }
 
-export default function Gallery({ category, onNavigate, onShowAuthModal }: GalleryProps) {
+export default function Gallery({ category: propCategory, onNavigate, onShowAuthModal }: GalleryProps) {
   const { artworks, loading } = useArtworks();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('featured');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  // Safely get search params
+  let category = propCategory;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlCategory = params.get('category');
+    if (urlCategory) {
+      category = urlCategory;
+    }
+  } catch (error) {
+    console.warn('Could not parse URL search params:', error);
+  }
+
+  // Map display names to database values
+  const getDatabaseCategory = (displayName: string) => {
+    const mapping: Record<string, string> = {
+      'fabric': 'fabric',
+      'oil': 'oil',
+      'handcraft': 'handcraft',
+      'fabric painting': 'fabric',
+      'oil painting': 'oil',
+      'handcrafted items': 'handcraft'
+    };
+    const normalized = displayName.toLowerCase();
+    return mapping[normalized] || displayName;
+  };
 
   const filteredArtworks = useMemo(() => {
     let filtered = artworks;
@@ -32,14 +58,33 @@ export default function Gallery({ category, onNavigate, onShowAuthModal }: Galle
 
     // Filter by category if specified
     if (category) {
-      filtered = filtered.filter(artwork => artwork.category.toLowerCase() === category.toLowerCase());
+      const dbCategory = getDatabaseCategory(category);
+      filtered = filtered.filter(artwork => 
+        artwork.category.toLowerCase() === dbCategory.toLowerCase() ||
+        artwork.medium.toLowerCase() === dbCategory.toLowerCase()
+      );
+    }
+
+    // Filter by selected categories from sidebar
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(artwork => 
+        selectedCategories.some(cat => {
+          const dbCat = getDatabaseCategory(cat);
+          return (
+            artwork.category.toLowerCase() === dbCat.toLowerCase() ||
+            artwork.medium.toLowerCase() === dbCat.toLowerCase()
+          );
+        })
+      );
     }
 
     // Filter by price range
-    filtered = filtered.filter(artwork => artwork.price >= priceRange[0] && artwork.price <= priceRange[1]);
+    filtered = filtered.filter(artwork => 
+      artwork.price >= priceRange[0] && artwork.price <= priceRange[1]
+    );
 
     return filtered;
-  }, [artworks, searchTerm, category, priceRange]);
+  }, [artworks, searchTerm, category, priceRange, selectedCategories]);
 
   const sortedArtworks = useMemo(() => {
     let sortable = [...filteredArtworks];
@@ -66,13 +111,8 @@ export default function Gallery({ category, onNavigate, onShowAuthModal }: Galle
   }, [filteredArtworks, sortOrder]);
 
   // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
-  const totalPages = Math.ceil(sortedArtworks.length / itemsPerPage);
-  const paginatedArtworks = sortedArtworks.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedArtworks = sortedArtworks.slice(0, itemsPerPage);
 
   useEffect(() => {
     if (category === 'Fabric Painting') {
@@ -80,24 +120,47 @@ export default function Gallery({ category, onNavigate, onShowAuthModal }: Galle
     }
   }, [category]);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    const allCategories = artworks.map(artwork => artwork.category);
-    return Array.from(new Set(allCategories));
+  // Get unique categories and mediums
+  const { categories, mediums } = useMemo(() => {
+    const categoriesSet = new Set<string>();
+    const mediumsSet = new Set<string>();
+    
+    artworks.forEach(artwork => {
+      if (artwork.category) categoriesSet.add(artwork.category);
+      if (artwork.medium) mediumsSet.add(artwork.medium);
+    });
+    
+    return {
+      categories: Array.from(categoriesSet).sort(),
+      mediums: Array.from(mediumsSet).sort()
+    };
   }, [artworks]);
 
-  const handleCategoryToggle = (category: string) => {
+  const handleCategoryToggle = (selectedCategory: string) => {
     setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
+      prev.includes(selectedCategory) 
+        ? prev.filter(c => c !== selectedCategory)
+        : [...prev, selectedCategory]
     );
   };
 
   const getTitle = () => {
     if (category) {
-      // Capitalize first letter
-      return category.charAt(0).toUpperCase() + category.slice(1) + 's';
+      // Map medium to display names
+      const displayNames: Record<string, string> = {
+        'fabric': 'Fabric Paintings',
+        'oil': 'Oil Paintings',
+        'handcraft': 'Handcrafted Items'
+      };
+      
+      // Check if the category matches any medium
+      const mediumDisplayName = displayNames[category.toLowerCase()];
+      if (mediumDisplayName) {
+        return mediumDisplayName;
+      }
+      
+      // Fallback to the category name
+      return category.charAt(0).toUpperCase() + category.slice(1);
     }
     return 'Art Gallery';
   };
@@ -200,9 +263,9 @@ export default function Gallery({ category, onNavigate, onShowAuthModal }: Galle
               {/* Categories */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
-                <div className="space-y-2">
-                  {categories.map(category => (
-                    <label key={category} className="flex items-center">
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  {categories.length > 0 && categories.map(category => (
+                    <label key={`cat-${category}`} className="flex items-center">
                       <input
                         type="checkbox"
                         checked={selectedCategories.includes(category)}
@@ -214,6 +277,28 @@ export default function Gallery({ category, onNavigate, onShowAuthModal }: Galle
                   ))}
                 </div>
               </div>
+
+              {/* Mediums */}
+              {mediums.length > 0 && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Mediums</label>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                    {mediums.map(medium => (
+                      <label key={`med-${medium}`} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(medium)}
+                          onChange={() => handleCategoryToggle(medium)}
+                          className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          {medium.charAt(0).toUpperCase() + medium.slice(1)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Clear Filters */}
               <button
