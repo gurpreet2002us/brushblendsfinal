@@ -38,7 +38,8 @@ export default function Gallery({ category: propCategory, onNavigate, onShowAuth
       'handcraft': 'handcraft',
       'fabric painting': 'fabric',
       'oil painting': 'oil',
-      'handcrafted items': 'handcraft'
+      'handcrafted items': 'handcraft',
+      'skin care': 'skin-care'
     };
     const normalized = displayName.toLowerCase();
     return mapping[normalized] || displayName;
@@ -149,7 +150,8 @@ export default function Gallery({ category: propCategory, onNavigate, onShowAuth
       const displayNames: Record<string, string> = {
         'fabric': 'Fabric Paintings',
         'oil': 'Oil Paintings',
-        'handcraft': 'Handcrafted Items'
+        'handcraft': 'Handcrafted Items',
+        'skin-care': 'Skin Care'
       };
       
       // Check if the category matches any medium
@@ -168,6 +170,7 @@ export default function Gallery({ category: propCategory, onNavigate, onShowAuth
     if (category === 'fabric') return 'Discover our collection of intricate fabric paintings with embroidery and beadwork';
     if (category === 'oil') return 'Explore our classic oil paintings with rich colors and masterful techniques';
     if (category === 'handcraft') return 'Browse our unique handcrafted items including sculptures, carvings, and decorative pieces';
+    if (category === 'skin-care') return 'Shop our handcrafted skin care range including herbal soaps and shampoos';
     return 'Browse our complete collection of handcrafted artworks';
   };
 

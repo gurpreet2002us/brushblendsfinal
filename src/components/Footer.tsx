@@ -36,7 +36,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <h4 className="text-lg font-semibold">Quick Links</h4>
             <ul className="space-y-2">
               <li><button onClick={() => onNavigate('home')} className="text-gray-300 hover:text-amber-500 transition-colors duration-200 text-sm">Home</button></li>
-              <li><button onClick={() => onNavigate('gallery')} className="text-gray-300 hover:text-amber-500 transition-colors duration-200 text-sm">Gallery</button></li>
+              <li><button onClick={() => onNavigate('gallery')} className="text-gray-300 hover:text-amber-500 transition-colors duration-200 text-sm">Shop</button></li>
               <li><button onClick={() => onNavigate('fabric')} className="text-gray-300 hover:text-amber-500 transition-colors duration-200 text-sm">Fabric Paintings</button></li>
               <li><button onClick={() => onNavigate('oil')} className="text-gray-300 hover:text-amber-500 transition-colors duration-200 text-sm">Oil Paintings</button></li>
               <li><button onClick={() => onNavigate('handcraft')} className="text-gray-300 hover:text-amber-500 transition-colors duration-200 text-sm">Handcraft Items</button></li>

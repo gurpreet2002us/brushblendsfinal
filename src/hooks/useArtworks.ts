@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Artwork } from '../types';
+import { mockArtworks } from '../data/mockData';
 
 export function useArtworks() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
@@ -21,26 +22,45 @@ export function useArtworks() {
 
       if (error) throw error;
 
-      const formattedArtworks: Artwork[] = data.map(artwork => ({
-        id: artwork.id,
-        title: artwork.title,
-        description: artwork.description || '',
-        price: artwork.price,
-        medium: artwork.medium,
-        category: artwork.category,
-        style: artwork.style || '',
-        dimensions: artwork.dimensions,
-        images: artwork.images,
-        inStock: artwork.in_stock,
-        stockCount: artwork.stock_count,
-        featured: artwork.featured,
-        tags: artwork.tags,
-        dateCreated: artwork.date_created,
-        mainImageIndex: artwork.main_image_index || 0
-      }));
+      if (!data || data.length === 0) {
+        setArtworks(mockArtworks);
+        setError(null);
+        return;
+      }
 
-      setArtworks(formattedArtworks);
+      const formattedArtworks: Artwork[] = data.map(artwork => {
+        const uiMedium = artwork.category === 'Skin Care' && artwork.medium === 'handcraft' ? 'skin-care' : artwork.medium;
+        return {
+          id: artwork.id,
+          title: artwork.title,
+          description: artwork.description || '',
+          price: artwork.price,
+          medium: uiMedium,
+          category: artwork.category,
+          style: artwork.style || '',
+          dimensions: artwork.dimensions,
+          images: artwork.images,
+          inStock: artwork.in_stock,
+          stockCount: artwork.stock_count,
+          featured: artwork.featured,
+          tags: artwork.tags,
+          dateCreated: artwork.date_created,
+          mainImageIndex: artwork.main_image_index || 0
+        } as Artwork;
+      });
+
+      // Append Skin Care mocks if missing
+      const skinCareMocks = mockArtworks.filter(a => a.category === 'Skin Care');
+      const existingTitles = new Set(formattedArtworks.map(a => a.title.toLowerCase()));
+      const merged = [
+        ...formattedArtworks,
+        ...skinCareMocks.filter(a => !existingTitles.has(a.title.toLowerCase())),
+      ];
+
+      setArtworks(merged);
+      setError(null);
     } catch (err) {
+      setArtworks(mockArtworks);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -51,13 +71,14 @@ export function useArtworks() {
 }
 
 export async function createArtwork(artwork: Omit<Artwork, 'id' | 'dateCreated'>) {
+  const dbMedium = artwork.medium === 'skin-care' ? 'handcraft' : artwork.medium;
   const { data, error } = await supabase
     .from('artworks')
     .insert({
       title: artwork.title,
       description: artwork.description,
       price: artwork.price,
-      medium: artwork.medium,
+      medium: dbMedium,
       category: artwork.category,
       style: artwork.style,
       dimensions: artwork.dimensions,
@@ -75,13 +96,14 @@ export async function createArtwork(artwork: Omit<Artwork, 'id' | 'dateCreated'>
 }
 
 export async function updateArtwork(id: string, updates: Partial<Artwork>) {
+  const dbMedium = updates.medium === 'skin-care' ? 'handcraft' : updates.medium;
   const { data, error } = await supabase
     .from('artworks')
     .update({
       title: updates.title,
       description: updates.description,
       price: updates.price,
-      medium: updates.medium,
+      medium: dbMedium,
       category: updates.category,
       style: updates.style,
       dimensions: updates.dimensions,

@@ -25,7 +25,7 @@ import FAQPage from './components/FAQPage';
 import TrackOrderPage from './components/TrackOrderPage';
 import DatabaseTest from './components/DatabaseTest';
 
-type Page = 'home' | 'gallery' | 'fabric' | 'oil' | 'handcraft' | 'about' | 'contact' | 'cart' | 'wishlist' | 'profile' | 'login' | 'artwork' | 'checkout' | 'admin' | 'privacy' | 'terms' | 'cookies' | 'shipping' | 'returns' | 'size-guide' | 'care-instructions' | 'faq' | 'track-order' | 'database-test';
+type Page = 'home' | 'gallery' | 'fabric' | 'oil' | 'handcraft' | 'skin-care' | 'about' | 'contact' | 'cart' | 'wishlist' | 'profile' | 'login' | 'artwork' | 'checkout' | 'admin' | 'privacy' | 'terms' | 'cookies' | 'shipping' | 'returns' | 'size-guide' | 'care-instructions' | 'faq' | 'track-order' | 'database-test';
 
 function AppContent() {
   const { user, loading: authLoading } = useSupabase();
@@ -131,6 +131,8 @@ function AppContent() {
         return <Gallery onNavigate={handleNavigate} category="Oil Painting" onShowAuthModal={handleShowAuthModal} />;
       case 'handcraft':
         return <Gallery onNavigate={handleNavigate} category="Handcraft" onShowAuthModal={handleShowAuthModal} />;
+      case 'skin-care':
+        return <Gallery onNavigate={handleNavigate} category="Skin Care" onShowAuthModal={handleShowAuthModal} />;
       case 'artwork':
         return selectedArtworkId ? (
           <ArtworkDetail artworkId={selectedArtworkId} onNavigate={handleNavigate} artworks={artworks} />

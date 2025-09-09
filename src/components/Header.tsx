@@ -44,10 +44,11 @@ export default function Header({ currentPage, onNavigate, onLogout, user, userPr
   const navItems = [
     { id: 'home', label: 'Home' },
       { id: 'about', label: 'About' },
-    { id: 'gallery', label: 'Gallery' },
+    { id: 'gallery', label: 'Shop' },
     { id: 'fabric', label: 'Fabric Paintings' },
     { id: 'oil', label: 'Oil Paintings' },
     { id: 'handcraft', label: 'Handcraft Items' }, 
+    { id: 'skin-care', label: 'Skin Care' },
     { id: 'contact', label: 'Contact' },
   ];
 

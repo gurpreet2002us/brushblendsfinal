@@ -5,6 +5,7 @@ import { Artwork } from '../types';
 import { useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { useSupabase } from '../hooks/useSupabase';
+import { mockArtworks } from '../data/mockData';
 
 interface ArtworkDetailProps {
   artworkId: string;
@@ -44,7 +45,7 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
     if (showOrderForm) setAgreedToTerms(false);
   }, [showOrderForm]);
 
-  const artwork = artworks.find(a => a.id === artworkId);
+  const artwork = artworks.find(a => a.id === artworkId) || mockArtworks.find(a => a.id === artworkId);
   
   if (!artwork) {
     return (
@@ -198,9 +199,11 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
                     ? 'bg-purple-100 text-purple-800'
                     : artwork.medium === 'oil'
                     ? 'bg-blue-100 text-blue-800'
-                    : 'bg-green-100 text-green-800'
+                    : artwork.medium === 'handcraft'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-pink-100 text-pink-800'
                 }`}>
-                  {artwork.medium === 'fabric' ? 'Fabric Painting' : artwork.medium === 'oil' ? 'Oil Painting' : 'Handcraft Item'}
+                  {artwork.medium === 'fabric' ? 'Fabric Painting' : artwork.medium === 'oil' ? 'Oil Painting' : artwork.medium === 'handcraft' ? 'Handcraft Item' : 'Skin Care'}
                 </span>
                 <button
                   onClick={handleToggleWishlist}
@@ -352,6 +355,7 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
                     {artwork.medium === 'fabric' && 'Hand-painted fabric with embroidery and beadwork details. Each piece is unique and crafted with traditional techniques.'}
                     {artwork.medium === 'oil' && 'Oil on canvas using premium quality paints and brushes. Rich textures and vibrant colors that last for generations.'}
                     {artwork.medium === 'handcraft' && 'Handcrafted using traditional methods and premium materials. Each piece is unique and made by skilled artisans.'}
+                    {artwork.medium === 'skin-care' && 'Natural ingredients, handcrafted in small batches. Gentle on skin and free from harsh chemicals.'}
                   </p>
                 </div>
                 
@@ -380,6 +384,14 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
                         <li>• Clean according to material-specific instructions</li>
                         <li>• Keep in a stable environment</li>
                         <li>• Avoid exposure to moisture and extreme temperatures</li>
+                      </>
+                    )}
+                    {artwork.medium === 'skin-care' && (
+                      <>
+                        <li>• Store in a cool, dry place away from sunlight</li>
+                        <li>• Perform a patch test before first use</li>
+                        <li>• For external use only</li>
+                        <li>• Use within 12 months of opening</li>
                       </>
                     )}
                   </ul>

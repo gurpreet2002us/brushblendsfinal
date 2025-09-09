@@ -132,6 +132,8 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
         return 'bg-blue-100 text-blue-800';
       case 'handcraft':
         return 'bg-green-100 text-green-800';
+      case 'skin-care':
+        return 'bg-pink-100 text-pink-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -145,6 +147,8 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
         return 'Oil';
       case 'handcraft':
         return 'Handcraft';
+      case 'skin-care':
+        return 'Skin Care';
       default:
         return artwork.medium;
     }

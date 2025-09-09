@@ -51,7 +51,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     title: '',
     description: '',
     price: '',
-    medium: 'fabric' as 'fabric' | 'oil' | 'handcraft',
+    medium: 'fabric' as 'fabric' | 'oil' | 'handcraft' | 'skin-care',
     category: '',
     style: '',
     dimensions: { width: '', height: '', unit: 'cm' as 'cm' | 'inches' },
@@ -285,10 +285,13 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         tags: artworkForm.tags
       };
 
+      const isValidUUID = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
       let result;
-      if (editingArtwork) {
+      if (editingArtwork && isValidUUID(editingArtwork.id)) {
         result = await updateArtwork(editingArtwork.id, artworkData);
       } else {
+        // For mock items with non-UUID ids, always create a new record
         result = await createArtwork(artworkData);
       }
 
@@ -852,6 +855,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                   <option value="fabric">Fabric</option>
                   <option value="oil">Oil</option>
                   <option value="handcraft">Handcraft</option>
+                  <option value="skin-care">Skin Care</option>
                 </select>
                 <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                   <button
@@ -1329,6 +1333,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                         <option value="fabric">Fabric</option>
                         <option value="oil">Oil</option>
                         <option value="handcraft">Handcraft</option>
+                        <option value="skin-care">Skin Care</option>
                       </select>
                     </div>
                     <div>

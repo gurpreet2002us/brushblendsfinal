@@ -220,4 +220,40 @@ export const mockArtworks: Artwork[] = [
     tags: ['marble', 'inlay', 'jewelry box', 'pietra dura', 'luxury'],
     dateCreated: '2024-02-28',
   },
+  {
+    id: '13',
+    title: 'Herbal Soap (Neem & Tulsi)',
+    description: 'Handcrafted herbal soap made with neem and tulsi extracts. Gentle on skin, suitable for all skin types.',
+    price: 199,
+    medium: 'handcraft',
+    category: 'Skin Care',
+    style: 'Natural',
+    dimensions: { width: 7, height: 3, unit: 'cm' },
+    images: [
+      'https://images.pexels.com/photos/6621433/pexels-photo-6621433.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+    ],
+    inStock: true,
+    stockCount: 20,
+    featured: false,
+    tags: ['soap', 'herbal', 'neem', 'tulsi', 'skin care'],
+    dateCreated: '2024-03-01',
+  },
+  {
+    id: '14',
+    title: 'Herbal Shampoo (Amla & Shikakai)',
+    description: 'Natural herbal shampoo infused with amla and shikakai for stronger, shinier hair. Sulfate and paraben free.',
+    price: 349,
+    medium: 'handcraft',
+    category: 'Skin Care',
+    style: 'Natural',
+    dimensions: { width: 5, height: 18, unit: 'cm' },
+    images: [
+      'https://images.pexels.com/photos/6621431/pexels-photo-6621431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+    ],
+    inStock: true,
+    stockCount: 15,
+    featured: true,
+    tags: ['shampoo', 'herbal', 'amla', 'shikakai', 'hair care', 'skin care'],
+    dateCreated: '2024-03-02',
+  },
 ];

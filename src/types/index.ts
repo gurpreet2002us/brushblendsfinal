@@ -3,7 +3,7 @@ export interface Artwork {
   title: string;
   description: string;
   price: number;
-  medium: 'fabric' | 'oil' | 'handcraft';
+  medium: 'fabric' | 'oil' | 'handcraft' | 'skin-care';
   category: string;
   style: string;
   dimensions: {
