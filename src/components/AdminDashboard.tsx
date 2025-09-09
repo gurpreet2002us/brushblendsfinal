@@ -74,6 +74,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [orderStatusUpdating, setOrderStatusUpdating] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   // 2. User Management: Add state for selected user and modal visibility
   const [selectedUser, setSelectedUser] = useState(null);
@@ -587,6 +588,33 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   }, [activeTab]);
 
+  const handleDeleteOrder = async (order: any) => {
+    if (!order || !order.id) return;
+    const confirmDelete = window.confirm(`Delete order #${String(order.id).slice(-6)}? This cannot be undone.`);
+    if (!confirmDelete) return;
+    try {
+      setDeletingOrderId(order.id);
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', order.id);
+      if (error) throw error;
+
+      // Ensure state reflects DB
+      await loadOrders();
+      await loadStats();
+      if (selectedOrder && selectedOrder.id === order.id) {
+        setShowOrderModal(false);
+      }
+    } catch (e: any) {
+      const message = e?.message || 'Failed to delete order.';
+      alert(message);
+      console.error('Delete order error:', e);
+    } finally {
+      setDeletingOrderId(null);
+    }
+  };
+
   if (loading || artworksLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -669,7 +697,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
           <div className="space-y-8">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition" onClick={() => setActiveTab('users')} role="button" aria-label="Go to Users">
                 <div className="flex items-center">
                   <Users className="h-8 w-8 text-blue-600" />
                   <div className="ml-4">
@@ -679,7 +707,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition" onClick={() => setActiveTab('artworks')} role="button" aria-label="Go to Artworks">
                 <div className="flex items-center">
                   <Package className="h-8 w-8 text-green-600" />
                   <div className="ml-4">
@@ -689,7 +717,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition" onClick={() => setActiveTab('orders')} role="button" aria-label="Go to Orders">
                 <div className="flex items-center">
                   <ShoppingCart className="h-8 w-8 text-purple-600" />
                   <div className="ml-4">
@@ -699,7 +727,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition" onClick={() => setActiveTab('payments')} role="button" aria-label="Go to Payments">
                 <div className="flex items-center">
                   <DollarSign className="h-8 w-8 text-amber-600" />
                   <div className="ml-4">
@@ -1000,10 +1028,21 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(order.created_at).toLocaleDateString()}
                           </td>
-                          
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button className="text-amber-600 hover:text-amber-900" onClick={() => handleViewOrder(order)}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                            <button className="text-amber-600 hover:text-amber-900" onClick={() => handleViewOrder(order)} title="View">
                               <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              className="text-red-600 hover:text-red-800"
+                              onClick={() => handleDeleteOrder(order)}
+                              title="Delete"
+                              disabled={deletingOrderId === order.id}
+                            >
+                              {deletingOrderId === order.id ? (
+                                <span className="inline-block h-4 w-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></span>
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -1526,12 +1565,23 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Order #{selectedOrder.id.slice(-6)} Details</h2>
-                <button
-                  onClick={() => setShowOrderModal(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleDeleteOrder(selectedOrder)}
+                    className="px-3 py-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg border border-red-200"
+                    disabled={deletingOrderId === selectedOrder.id}
+                    title="Delete Order"
+                  >
+                    {deletingOrderId === selectedOrder.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                  <button
+                    onClick={() => setShowOrderModal(false)}
+                    className="p-2 text-gray-400 hover:text-gray-600"
+                    title="Close"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6 mb-6">
@@ -1615,6 +1665,33 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Order Summary */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">Subtotal</p>
+                  <p className="text-lg font-semibold text-gray-900">₹{(selectedOrder.items || []).reduce((s: number, it: any) => s + (it.price * it.quantity), 0)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">Discount</p>
+                  <p className="text-lg font-semibold text-gray-900">₹{selectedOrder.discount_amount || 0}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">Shipping</p>
+                  <p className="text-lg font-semibold text-gray-900">₹{selectedOrder.shipping_cost || 0}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">GST</p>
+                  <p className="text-lg font-semibold text-gray-900">₹{selectedOrder.gst_amount || 0}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-4">
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">Grand Total</p>
+                  <p className="text-2xl font-bold text-gray-900">₹{selectedOrder.total}</p>
+                </div>
               </div>
             </div>
           </div>

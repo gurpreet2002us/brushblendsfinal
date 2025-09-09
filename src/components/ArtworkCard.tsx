@@ -156,7 +156,11 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
 
   return (
     <>
-      <div className="group relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+      <div className="group relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+        onClick={() => onViewDetails(artwork.id)}
+        role="button"
+        aria-label={`View details for ${artwork.title}`}
+      >
         <div className="relative overflow-hidden">
           <img
             src={mainImage}
@@ -208,7 +212,7 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
 
           {/* Out of stock overlay */}
           {artwork.stockCount === 0 && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center pointer-events-none">
               <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                 Out of Stock
               </span>
