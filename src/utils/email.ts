@@ -22,10 +22,26 @@ export async function sendEmail({
     }),
   });
 
+  const contentType = response.headers.get('content-type') || '';
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to send email');
+    let message = `Failed to send email (status ${response.status})`;
+    try {
+      if (contentType.includes('application/json')) {
+        const error = await response.json();
+        message = error?.error || message;
+      } else {
+        const txt = await response.text();
+        if (txt) message = txt;
+      }
+    } catch {}
+    throw new Error(message);
   }
 
-  return await response.json();
+  try {
+    if (contentType.includes('application/json')) {
+      return await response.json();
+    }
+  } catch {}
+  return { ok: true } as const;
 } 

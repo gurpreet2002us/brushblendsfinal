@@ -46,7 +46,7 @@ export default function UPIPaymentModal({ isOpen, onClose, onSuccess, paymentDat
       if (result.success) {
         setPaymentStatus('success');
         setTimeout(() => {
-          onSuccess(result);
+          onSuccess({ ...result, method: selectedMethod });
         }, 2000);
       } else {
         setPaymentStatus('failed');
@@ -64,7 +64,8 @@ export default function UPIPaymentModal({ isOpen, onClose, onSuccess, paymentDat
       onSuccess({
         success: true,
         paymentId: `manual_${Date.now()}`,
-        transactionId: paymentData.orderId
+        transactionId: paymentData.orderId,
+        method: 'manual'
       });
     }, 1000);
   };

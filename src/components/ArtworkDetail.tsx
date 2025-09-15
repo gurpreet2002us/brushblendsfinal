@@ -77,6 +77,20 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
   }, [artwork.mainImageIndex]);
 
   const handleAddToCart = async () => {
+    if (artwork.medium === 'fabric') {
+      try {
+        const designPayload = {
+          artworkId: artwork.id,
+          title: artwork.title,
+          image: artwork.images?.[0],
+          category: artwork.category,
+          price: artwork.price
+        };
+        localStorage.setItem('customOrderSelectedDesign', JSON.stringify(designPayload));
+      } catch {}
+      onNavigate('custom-order');
+      return;
+    }
     if (artwork.stockCount > 0) {
       for (let i = 0; i < quantity; i++) {
         await addToCart(artwork);
@@ -160,7 +174,7 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
                   </span>
                 </div>
               )}
-              {artwork.stockCount === 0 && (
+              {artwork.stockCount === 0 && artwork.medium !== 'fabric' && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                   <span className="bg-red-600 text-white px-4 py-2 rounded-full text-lg font-medium">
                     Out of Stock
@@ -233,12 +247,12 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
                 ) : (
                   <span className="text-3xl font-bold text-gray-900">₹{originalPrice}</span>
                 )}
-                <span className={`text-sm ${artwork.stockCount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {artwork.stockCount > 0 ? `${artwork.stockCount} in stock` : 'Out of stock'}
+                <span className={`text-sm ${artwork.medium === 'fabric' ? 'text-amber-600' : artwork.stockCount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {artwork.medium === 'fabric' ? 'Available on order' : artwork.stockCount > 0 ? `${artwork.stockCount} in stock` : 'Out of stock'}
                 </span>
               </div>
 
-              {artwork.stockCount > 0 && (
+              {artwork.stockCount > 0 && artwork.medium !== 'fabric' && (
                 <div className="flex items-center space-x-4 mb-6">
                   <label className="text-sm font-medium text-gray-700">Quantity:</label>
                   <select
@@ -256,17 +270,33 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
               )}
 
               <div className="flex flex-col sm:flex-row gap-3">
-                {artwork.stockCount > 0 ? (
+                {(artwork.medium === 'fabric') || artwork.stockCount > 0 ? (
                   <button
                     onClick={handleAddToCart}
                     className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors duration-200"
                   >
                     <ShoppingCart className="h-5 w-5" />
-                    <span>Add to Cart</span>
+                    <span>{artwork.medium === 'fabric' ? 'Customize & Order' : 'Add to Cart'}</span>
                   </button>
                 ) : (
                   <button
-                    onClick={() => setShowOrderForm(true)}
+                    onClick={() => {
+                      if (artwork.medium === 'fabric') {
+                        try {
+                          const designPayload = {
+                            artworkId: artwork.id,
+                            title: artwork.title,
+                            image: artwork.images?.[0],
+                            category: artwork.category,
+                            price: artwork.price
+                          };
+                          localStorage.setItem('customOrderSelectedDesign', JSON.stringify(designPayload));
+                        } catch {}
+                        onNavigate('custom-order');
+                      } else {
+                        setShowOrderForm(true);
+                      }
+                    }}
                     className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors duration-200"
                   >
                     <Clock className="h-5 w-5" />
@@ -290,15 +320,17 @@ export default function ArtworkDetail({ artworkId, onNavigate, artworks }: Artwo
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3">
-                  <Ruler className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <span className="text-sm text-gray-500">Dimensions</span>
-                    <p className="font-medium text-gray-900">
-                      {artwork.dimensions.width} × {artwork.dimensions.height} {artwork.dimensions.unit}
-                    </p>
+                {artwork.medium !== 'fabric' && (
+                  <div className="flex items-center space-x-3">
+                    <Ruler className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <span className="text-sm text-gray-500">Dimensions</span>
+                      <p className="font-medium text-gray-900">
+                        {artwork.dimensions.width} × {artwork.dimensions.height} {artwork.dimensions.unit}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <div className="flex items-center space-x-3">
                   <Tag className="h-5 w-5 text-gray-400" />

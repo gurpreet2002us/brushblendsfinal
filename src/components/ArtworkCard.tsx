@@ -53,6 +53,20 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (artwork.medium === 'fabric') {
+      try {
+        const designPayload = {
+          artworkId: artwork.id,
+          title: artwork.title,
+          image: artwork.images?.[0],
+          category: artwork.category,
+          price: artwork.price
+        };
+        localStorage.setItem('customOrderSelectedDesign', JSON.stringify(designPayload));
+      } catch {}
+      if (onNavigate) onNavigate('custom-order');
+      return;
+    }
     if (artwork.stockCount > 0 && !isAddingToCart) {
       setIsAddingToCart(true);
       try {
@@ -113,6 +127,20 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
 
   const handleOutOfStockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (artwork.medium === 'fabric') {
+      try {
+        const designPayload = {
+          artworkId: artwork.id,
+          title: artwork.title,
+          image: artwork.images?.[0],
+          category: artwork.category,
+          price: artwork.price
+        };
+        localStorage.setItem('customOrderSelectedDesign', JSON.stringify(designPayload));
+      } catch {}
+      if (onNavigate) onNavigate('custom-order');
+      return;
+    }
     if (!user) {
       if (onShowAuthModal) {
         onShowAuthModal();
@@ -215,7 +243,7 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
           )}
 
           {/* Out of stock overlay */}
-          {artwork.stockCount === 0 && (
+          {artwork.stockCount === 0 && artwork.medium !== 'fabric' && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center pointer-events-none">
               <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                 Out of Stock
@@ -235,9 +263,11 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
           
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-500">{artwork.category}</span>
-            <span className="text-sm text-gray-500">
-              {artwork.dimensions?.width || 0} × {artwork.dimensions?.height || 0} {artwork.dimensions?.unit || 'cm'}
-            </span>
+            {artwork.medium !== 'fabric' && (
+              <span className="text-sm text-gray-500">
+                {artwork.dimensions?.width || 0} × {artwork.dimensions?.height || 0} {artwork.dimensions?.unit || 'cm'}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
@@ -252,18 +282,22 @@ export default function ArtworkCard({ artwork, onViewDetails, onNavigate, onShow
                 <span className="text-2xl font-bold text-gray-900">₹{originalPrice}</span>
               )}
               <span className="text-xs text-gray-500">
-                {artwork.stockCount > 0 ? `${artwork.stockCount} available` : 'Out of stock'}
+                {artwork.medium === 'fabric'
+                  ? 'Available on order'
+                  : artwork.stockCount > 0
+                    ? `${artwork.stockCount} available`
+                    : 'Out of stock'}
               </span>
             </div>
             
-            {artwork.stockCount > 0 ? (
+            {(artwork.medium === 'fabric') || artwork.stockCount > 0 ? (
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
                 className="flex items-center space-x-2 px-3 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors duration-200 text-sm disabled:opacity-50"
               >
                 <ShoppingCart className="h-4 w-4" />
-                <span>{isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                <span>{artwork.medium === 'fabric' ? 'Customize & Order' : isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
               </button>
             ) : (
               <button

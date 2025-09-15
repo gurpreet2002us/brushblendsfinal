@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Palette, Brush, Star, Users, Award, Truck, Shield, Heart, CheckCircle, Hammer, X, Tag } from 'lucide-react';
 import { useArtworks } from '../hooks/useArtworks';
 import ArtworkCard from './ArtworkCard';
+import { supabase } from '../lib/supabase';
 
 interface HomePageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -12,6 +13,7 @@ export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps)
   const { artworks, loading } = useArtworks();
   const featuredArtworks = artworks.filter(artwork => artwork.featured);
   const [showCouponToast, setShowCouponToast] = useState(true);
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
 
   useEffect(() => {
     // Auto-hide toast after 10 seconds
@@ -22,17 +24,47 @@ export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps)
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    // Load active coupon (if any)
+    (async () => {
+      try {
+        const now = new Date();
+        const { data, error } = await supabase
+          .from('coupons')
+          .select('code, discount_percentage, valid_from, valid_until, active')
+          .eq('active', true)
+          .order('created_at', { ascending: false });
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const valid = data.find(c => {
+            const fromOk = c.valid_from ? new Date(c.valid_from) <= now : true;
+            const untilOk = c.valid_until ? new Date(c.valid_until) >= now : true;
+            return fromOk && untilOk;
+          });
+          if (valid) {
+            setCoupon({ code: valid.code, discount: valid.discount_percentage });
+          } else {
+            setCoupon(null);
+          }
+        } else {
+          setCoupon(null);
+        }
+      } catch {
+        setCoupon(null);
+      }
+    })();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Coupon Toast */}
-      {showCouponToast && (
+      {showCouponToast && !!coupon && (
         <div className="fixed top-20 right-4 z-50 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-lg shadow-lg max-w-sm animate-slide-in">
           <div className="flex items-start justify-between">
             <div className="flex items-center">
               <Tag className="h-5 w-5 mr-2 flex-shrink-0" />
               <div>
                 <h4 className="font-semibold text-sm">Special Offer!</h4>
-                <p className="text-xs opacity-90">Use code <span className="font-bold">BB202510</span> for 10% off</p>
+                <p className="text-xs opacity-90">Use code <span className="font-bold">{coupon.code}</span> for {coupon.discount}% off</p>
               </div>
             </div>
             <button
@@ -45,7 +77,7 @@ export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps)
         </div>
       )}
 
-      {/* Hero Section */}
+      {/* Hero Section - Updated to emphasize Fabric Painting */}
       <section className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-20 overflow-hidden">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-10 left-10 w-4 h-4 bg-amber-400 rounded-full opacity-20"></div>
@@ -59,52 +91,50 @@ export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps)
               <div className="space-y-6">
                 <div className="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
                   <Star className="h-4 w-4 mr-2 fill-current" />
-                  India's Premier Art Gallery
+                  Custom Fabric Painting Experts
                 </div>
                 <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  Welcome to
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600"> Brush n Blends</span>
+                  Custom Hand-Painted Fabrics,
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600"> Designed for You</span>
                 </h1>
-                <p className="text-xl text-gray-600 leading-relaxed">
-                  Discover exquisite handcrafted fabric paintings, oil masterpieces, and unique artisanal items that transform spaces 
-                  and touch hearts. Each piece tells a unique story of Indian artistry and tradition.
+                <p className="text-xl text-gray-700 leading-relaxed">
+                  We transform plain textiles into wearable art. Provide your own fabric or ask us to source it — we paint your design and can stitch it into stunning dresses or suits.
                 </p>
               </div>
-              
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => onNavigate('gallery')}
+                  onClick={() => onNavigate('custom-order')}
                   className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                 >
-                  <Palette className="mr-2 h-5 w-5" />
-                  Explore Gallery
+                  <Brush className="mr-2 h-5 w-5" />
+                  Get Your Fabric Painted
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
-                  onClick={() => onNavigate('about')}
+                  onClick={() => onNavigate('services')}
                   className="inline-flex items-center px-8 py-4 border-2 border-amber-600 text-amber-600 font-semibold rounded-xl hover:bg-amber-600 hover:text-white transition-all duration-300"
                 >
-                  Learn Our Story
+                  Book Design Consultation
                 </button>
               </div>
-
-              {/* Trust Indicators */}
-              <div className="flex items-center space-x-8 pt-4">
+              {/* Quick value props under hero */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-sm text-gray-600">Authentic Handcrafted</span>
+                  <span className="text-sm text-gray-700">Client fabric or sourced by us</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm text-gray-600">Secure Payments</span>
+                  <Palette className="h-5 w-5 text-amber-600" />
+                  <span className="text-sm text-gray-700">Custom design painting</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Truck className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm text-gray-600">Free Shipping</span>
+                  <Hammer className="h-5 w-5 text-purple-600" />
+                  <span className="text-sm text-gray-700">Optional stitching add-on</span>
                 </div>
               </div>
             </div>
-            
+
+            {/* Keep existing visual collage */}
             <div className="relative">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-6">
@@ -125,7 +155,7 @@ export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps)
                   </div>
                 </div>
                 <div className="space-y-6 mt-8">
-                  <div className="bg-white p-4 rounded-xl shadow-lg">
+                  <div className="bg-white p-4 rounded-2xl shadow-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <Star className="h-4 w-4 text-yellow-400 fill-current" />
                       <span className="text-lg font-bold text-gray-900">4.9/5</span>
@@ -142,11 +172,79 @@ export default function HomePage({ onNavigate, onShowAuthModal }: HomePageProps)
                   </div>
                 </div>
               </div>
-              
-              {/* Floating Elements */}
               <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full opacity-20 animate-pulse"></div>
               <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full opacity-10 animate-pulse delay-1000"></div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works - 4 steps */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+            <p className="text-lg text-gray-600">A simple 4-step process to get your fabric beautifully hand-painted</p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl shadow-sm">
+              <div className="flex items-center mb-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-600 text-white font-semibold mr-3">1</span>
+                <span className="font-semibold text-gray-900">Choose Fabric</span>
+              </div>
+              <p className="text-gray-700 text-sm">Provide your fabric or ask us to source the perfect base for your design.</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl shadow-sm">
+              <div className="flex items-center mb-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-600 text-white font-semibold mr-3">2</span>
+                <span className="font-semibold text-gray-900">Share Inspiration</span>
+              </div>
+              <p className="text-gray-700 text-sm">Upload references and pick a style. We finalize your custom design.</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl shadow-sm">
+              <div className="flex items-center mb-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-600 text-white font-semibold mr-3">3</span>
+                <span className="font-semibold text-gray-900">We Hand-Paint</span>
+              </div>
+              <p className="text-gray-700 text-sm">Our artists bring your design to life using premium, long-lasting paints.</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl shadow-sm">
+              <div className="flex items-center mb-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-600 text-white font-semibold mr-3">4</span>
+                <span className="font-semibold text-gray-900">Optional Stitching</span>
+              </div>
+              <p className="text-gray-700 text-sm">Upgrade to stitching for a ready-to-wear dress or suit tailored to you.</p>
+            </div>
+          </div>
+          <div className="text-center mt-10">
+            <button
+              onClick={() => onNavigate('custom-order')}
+              className="inline-flex items-center px-8 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors"
+            >
+              Start Custom Order
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Add-On Highlight */}
+      <section className="py-12 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white rounded-2xl shadow-md p-6">
+            <div className="flex items-center gap-4">
+              <Hammer className="h-8 w-8 text-amber-700" />
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">We can stitch your fabric too!</h3>
+                <p className="text-gray-600 text-sm">Keep focus on painting — stitching is an optional add-on you can select during ordering.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate('services')}
+              className="inline-flex items-center px-6 py-3 border-2 border-amber-600 text-amber-700 rounded-lg font-semibold hover:bg-amber-600 hover:text-white transition-colors"
+            >
+              View Services
+            </button>
           </div>
         </div>
       </section>

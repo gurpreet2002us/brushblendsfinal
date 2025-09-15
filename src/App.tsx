@@ -24,8 +24,10 @@ import CareInstructionsPage from './components/CareInstructionsPage';
 import FAQPage from './components/FAQPage';
 import TrackOrderPage from './components/TrackOrderPage';
 import DatabaseTest from './components/DatabaseTest';
+import ServicesPage from './components/ServicesPage';
+import CustomOrderForm from './components/CustomOrderForm';
 
-type Page = 'home' | 'gallery' | 'fabric' | 'oil' | 'handcraft' | 'skin-care' | 'about' | 'contact' | 'cart' | 'wishlist' | 'profile' | 'login' | 'artwork' | 'checkout' | 'admin' | 'privacy' | 'terms' | 'cookies' | 'shipping' | 'returns' | 'size-guide' | 'care-instructions' | 'faq' | 'track-order' | 'database-test';
+type Page = 'home' | 'gallery' | 'fabric' | 'oil' | 'handcraft' | 'skin-care' | 'about' | 'contact' | 'cart' | 'wishlist' | 'profile' | 'login' | 'artwork' | 'checkout' | 'admin' | 'privacy' | 'terms' | 'cookies' | 'shipping' | 'returns' | 'size-guide' | 'care-instructions' | 'faq' | 'track-order' | 'database-test' | 'services' | 'custom-order';
 
 function AppContent() {
   const { user, loading: authLoading } = useSupabase();
@@ -143,6 +145,10 @@ function AppContent() {
         return <Cart onNavigate={handleNavigate} />;
       case 'checkout':
         return <Checkout onNavigate={handleNavigate} />;
+      case 'services':
+        return <ServicesPage onNavigate={handleNavigate} />;
+      case 'custom-order':
+        return <CustomOrderForm onNavigate={handleNavigate} />;
       case 'profile':
         return <UserDashboard onNavigate={handleNavigate} onLogout={handleLogout} />;
       case 'admin':

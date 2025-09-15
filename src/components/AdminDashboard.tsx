@@ -565,6 +565,15 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     }
   };
 
+  const handleToggleCouponActive = async (coupon: any) => {
+    try {
+      await supabase.from('coupons').update({ active: !coupon.active }).eq('id', coupon.id);
+      await loadCoupons();
+    } catch (e) {
+      alert('Failed to update coupon status');
+    }
+  };
+
   // Fetch payments
   const loadPayments = async () => {
     setPaymentsLoading(true);
@@ -1204,6 +1213,26 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                         <p>Discount: {coupon.discount_percentage}%</p>
                         <p>Used: {coupon.used_count}/{coupon.usage_limit || '∞'}</p>
                         <p>Valid until: {coupon.valid_until ? new Date(coupon.valid_until).toLocaleDateString() : 'No expiry'}</p>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2">
+                        <button
+                          className="px-3 py-1 text-white bg-blue-600 rounded hover:bg-blue-700"
+                          onClick={() => handleEditCoupon(coupon)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className={`px-3 py-1 rounded ${coupon.active ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                          onClick={() => handleToggleCouponActive(coupon)}
+                        >
+                          {coupon.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          className="px-3 py-1 text-white bg-red-600 rounded hover:bg-red-700"
+                          onClick={() => handleDeleteCoupon(coupon.id)}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}

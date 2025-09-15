@@ -23,6 +23,8 @@ export default function Header({ currentPage, onNavigate, onLogout, user, userPr
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [_, setForceUpdate] = useState(0);
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
 
   useEffect(() => {
     setForceUpdate(f => f + 1);
@@ -40,16 +42,26 @@ export default function Header({ currentPage, onNavigate, onLogout, user, userPr
     };
   }, []);
 
+  // Close mobile menu on page change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [currentPage]);
+
   // Use cartCount from useCart hook for real-time updates
   const navItems = [
     { id: 'home', label: 'Home' },
-      { id: 'about', label: 'About' },
+    { id: 'services', label: 'Services' },
     { id: 'gallery', label: 'Shop' },
-    { id: 'fabric', label: 'Fabric Paintings' },
-    { id: 'oil', label: 'Oil Paintings' },
-    { id: 'handcraft', label: 'Handcraft Items' }, 
     { id: 'skin-care', label: 'Skin Care' },
+    { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' },
+    { id: 'custom-order', label: 'Custom Order' },
+  ];
+
+  const shopSubItems = [
+    { id: 'fabric', label: 'Fabric Painting' },
+    { id: 'oil', label: 'Oil Painting' },
+    { id: 'handcraft', label: 'Handcraft' },
   ];
 
   // Search functionality
@@ -166,17 +178,51 @@ export default function Header({ currentPage, onNavigate, onLogout, user, userPr
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center space-x-8">
             {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`text-sm font-medium transition-colors duration-200 ${
-                  currentPage === item.id
-                    ? 'text-amber-600 border-b-2 border-amber-600'
-                    : 'text-gray-700 hover:text-amber-600'
-                }`}
-              >
-                {item.label}
-              </button>
+              item.id === 'gallery' ? (
+                <div
+                  key={item.id}
+                  className="relative"
+                  onMouseEnter={() => setIsShopOpen(true)}
+                  onMouseLeave={() => setIsShopOpen(false)}
+                >
+                  <button
+                    onClick={() => setIsShopOpen((o) => !o)}
+                    className={`text-sm font-medium transition-colors duration-200 ${
+                      currentPage === 'gallery'
+                        ? 'text-amber-600 border-b-2 border-amber-600'
+                        : 'text-gray-700 hover:text-amber-600'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                  {/* Dropdown */}
+                  <div className={`${isShopOpen ? 'block' : 'hidden'} absolute left-0 top-full pt-2 z-50`}>
+                    <div className="w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                      {shopSubItems.map(sub => (
+                        <button
+                          key={sub.id}
+                          onClick={() => onNavigate(sub.id)}
+                          className={`w-full text-left px-4 py-2 text-sm ${currentPage === sub.id ? 'text-amber-600 bg-amber-50' : 'text-gray-700 hover:bg-gray-50'}`}
+                        >
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                  className={`text-sm font-medium transition-colors duration-200 ${
+                    currentPage === item.id
+                      ? 'text-amber-600 border-b-2 border-amber-600'
+                      : 'text-gray-700 hover:text-amber-600'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
             ))}
           </nav>
 
@@ -306,20 +352,51 @@ export default function Header({ currentPage, onNavigate, onLogout, user, userPr
           <div className="lg:hidden border-t border-gray-200 py-4">
             <nav className="flex flex-col space-y-2">
               {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onNavigate(item.id);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`text-left px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                    currentPage === item.id
-                      ? 'text-amber-600 bg-amber-50'
-                      : 'text-gray-700 hover:text-amber-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {item.label}
-                </button>
+                item.id === 'gallery' ? (
+                  <div key={item.id}>
+                    <button
+                      onClick={() => setIsMobileShopOpen(!isMobileShopOpen)}
+                      className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                        currentPage === 'gallery'
+                          ? 'text-amber-600 bg-amber-50'
+                          : 'text-gray-700 hover:text-amber-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                    {isMobileShopOpen && (
+                      <div className="ml-4 mt-1 flex flex-col">
+                        {shopSubItems.map(sub => (
+                          <button
+                            key={sub.id}
+                            onClick={() => {
+                              onNavigate(sub.id);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className={`text-left px-4 py-2 text-sm ${currentPage === sub.id ? 'text-amber-600 bg-amber-50' : 'text-gray-700 hover:text-amber-600 hover:bg-gray-50'}`}
+                          >
+                            {sub.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onNavigate(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`text-left px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                      currentPage === item.id
+                        ? 'text-amber-600 bg-amber-50'
+                        : 'text-gray-700 hover:text-amber-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                )
               ))}
             </nav>
           </div>

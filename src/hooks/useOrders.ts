@@ -226,24 +226,32 @@ export function useOrders() {
         artworkTitle = artwork?.title || '';
       } catch {}
 
-      // Send email to user
-      if (data && data.email) {
-        await sendEmail({
-          to: data.email,
-          subject: 'Order Request Received',
-          text: `Thank you for your order request for '${artworkTitle}'. We will contact you soon.`,
-          html: `<p>Thank you for your order request for <b>${artworkTitle}</b>. We will contact you soon.</p>`,
-        });
+      // Send email to user (non-fatal)
+      try {
+        if (data && data.email) {
+          await sendEmail({
+            to: data.email,
+            subject: 'Order Request Received',
+            text: `Thank you for your order request for '${artworkTitle}'. We will contact you soon.`,
+            html: `<p>Thank you for your order request for <b>${artworkTitle}</b>. We will contact you soon.</p>`,
+          });
+        }
+      } catch (e) {
+        console.warn('User email notification failed (non-fatal):', e);
       }
-      // Send email to admin
-      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-      if (adminEmail) {
-        await sendEmail({
-          to: adminEmail,
-          subject: 'New Order Request',
-          text: `A new order request has been submitted for '${artworkTitle}' by ${data.name} (${data.email}, ${data.phone}).`,
-          html: `<p>A new order request has been submitted for <b>${artworkTitle}</b> by <b>${data.name}</b> (${data.email}, ${data.phone}).</p>`,
-        });
+      // Send email to admin (non-fatal)
+      try {
+        const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+        if (adminEmail) {
+          await sendEmail({
+            to: adminEmail,
+            subject: 'New Order Request',
+            text: `A new order request has been submitted for '${artworkTitle}' by ${data.name} (${data.email}, ${data.phone}).`,
+            html: `<p>A new order request has been submitted for <b>${artworkTitle}</b> by <b>${data.name}</b> (${data.email}, ${data.phone}).</p>`,
+          });
+        }
+      } catch (e) {
+        console.warn('Admin email notification failed (non-fatal):', e);
       }
 
       // Send WhatsApp notification for order request (existing logic)

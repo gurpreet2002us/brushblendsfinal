@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, CreditCard, Shield, Check, Smartphone, QrCode, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Shield, Check, Smartphone, QrCode, AlertCircle, Plus, Minus, X } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
@@ -15,7 +15,7 @@ interface CheckoutProps {
 }
 
 export default function Checkout({ onNavigate }: CheckoutProps) {
-  const { cart } = useCart();
+  const { cart, updateCartQuantity, removeFromCart } = useCart();
   const { createOrder } = useOrders();
   const { validateCoupon } = useCoupons();
   const { createPaymentOrder } = usePayment();
@@ -53,7 +53,9 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showUPIModal, setShowUPIModal] = useState(false);
   
-  
+  const handleOpenPaymentModal = () => {
+    setShowUPIModal(true);
+  };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.artwork.price * item.quantity), 0);
   const shippingCost = subtotal > 2000 ? 0 : 150;
@@ -301,6 +303,18 @@ if (!cart || cart.length === 0) {
                 <p className="text-sm text-gray-600 mb-4">
                   Scan this QR code with any UPI app (PhonePe, Google Pay, Paytm, etc.)
                 </p>
+
+                {/* Or pay using a gateway */}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={handleOpenPaymentModal}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Pay using Razorpay / PhonePe / UPI Link
+                  </button>
+                </div>
                 
                 {/* Payment Reference ID Input */}
                 <div className="mt-6 max-w-md mx-auto">
@@ -340,7 +354,35 @@ if (!cart || cart.length === 0) {
                     />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{item.artwork.title}</p>
-                      <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
+                      <div className="flex items-center space-x-3 mt-1">
+                        <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
+                          <button
+                            type="button"
+                            aria-label="Decrease quantity"
+                            onClick={() => updateCartQuantity(item.id, Math.max(0, item.quantity - 1))}
+                            className="px-2 py-1 text-gray-600 hover:bg-gray-50"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="px-3 text-sm select-none">{item.quantity}</span>
+                          <button
+                            type="button"
+                            aria-label="Increase quantity"
+                            onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                            className="px-2 py-1 text-gray-600 hover:bg-gray-50"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Remove item"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-red-600 hover:text-red-700 flex items-center text-xs"
+                        >
+                          <X className="w-3.5 h-3.5 mr-1" /> Remove
+                        </button>
+                      </div>
                     </div>
                     <p className="text-sm font-semibold text-gray-900">
                       ₹{(item.artwork.price * item.quantity).toFixed(2)}
@@ -430,8 +472,11 @@ if (!cart || cart.length === 0) {
         <UPIPaymentModal
           isOpen={showUPIModal}
           onClose={() => setShowUPIModal(false)}
-          onSuccess={(paymentId) => {
-            setPaymentReferenceId(paymentId);
+          onSuccess={(result: any) => {
+            // Set method and reference from provider
+            const ref = result.paymentId || result.transactionId || '';
+            setPaymentReferenceId(ref);
+            setPaymentMethod(result.method || 'gateway');
             setShowUPIModal(false);
           }}
           paymentData={{
