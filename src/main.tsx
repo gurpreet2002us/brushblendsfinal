@@ -4,16 +4,19 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { AppProvider } from './context/AppContext.tsx';
 import './index.css';
+import { HelmetProvider } from 'react-helmet-async';
 
 // For React Router v6+
 const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <StrictMode>
-    <BrowserRouter>
-      <AppProvider>
-        <App />
-      </AppProvider>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <AppProvider>
+          <App />
+        </AppProvider>
+      </BrowserRouter>
+    </HelmetProvider>
   </StrictMode>
 );

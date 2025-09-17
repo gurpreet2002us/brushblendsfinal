@@ -26,8 +26,49 @@ import TrackOrderPage from './components/TrackOrderPage';
 import DatabaseTest from './components/DatabaseTest';
 import ServicesPage from './components/ServicesPage';
 import CustomOrderForm from './components/CustomOrderForm';
+import SEO from './components/SEO';
 
 type Page = 'home' | 'gallery' | 'fabric' | 'oil' | 'handcraft' | 'skin-care' | 'about' | 'contact' | 'cart' | 'wishlist' | 'profile' | 'login' | 'artwork' | 'checkout' | 'admin' | 'privacy' | 'terms' | 'cookies' | 'shipping' | 'returns' | 'size-guide' | 'care-instructions' | 'faq' | 'track-order' | 'database-test' | 'services' | 'custom-order';
+
+const pageToPath: Record<Page, string> = {
+  home: '/',
+  gallery: '/gallery',
+  fabric: '/gallery/fabric',
+  oil: '/gallery/oil',
+  handcraft: '/gallery/handcraft',
+  'skin-care': '/gallery/skin-care',
+  about: '/about',
+  contact: '/contact',
+  cart: '/cart',
+  wishlist: '/wishlist',
+  profile: '/profile',
+  login: '/login',
+  artwork: '/artwork',
+  checkout: '/checkout',
+  admin: '/admin',
+  privacy: '/privacy',
+  terms: '/terms',
+  cookies: '/cookies',
+  shipping: '/shipping',
+  returns: '/returns',
+  'size-guide': '/size-guide',
+  'care-instructions': '/care-instructions',
+  faq: '/faq',
+  'track-order': '/track-order',
+  'database-test': '/database-test',
+  services: '/services',
+  'custom-order': '/custom-order',
+};
+
+function parseLocation(pathname: string): { page: Page; id?: string } {
+  if (pathname.startsWith('/artwork/')) {
+    const id = pathname.replace('/artwork/', '').split('/')[0];
+    return { page: 'artwork', id };
+  }
+  const match = Object.entries(pageToPath).find(([, p]) => p === pathname) as [Page, string] | undefined;
+  if (match) return { page: match[0] };
+  return { page: 'home' };
+}
 
 function AppContent() {
   const { user, loading: authLoading } = useSupabase();
@@ -38,6 +79,22 @@ function AppContent() {
   const [selectedArtworkId, setSelectedArtworkId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Initialize from URL and handle back/forward navigation
+  useEffect(() => {
+    const { page, id } = parseLocation(window.location.pathname);
+    setCurrentPage(page);
+    setSelectedArtworkId(id || null);
+
+    const onPopState = () => {
+      const { page: p, id: artId } = parseLocation(window.location.pathname);
+      setCurrentPage(p);
+      setSelectedArtworkId(artId || null);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   // Sync supabase user with app context and fetch profile
   useEffect(() => {
@@ -71,6 +128,14 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [currentPage]);
 
+  const navigateTo = (page: Page, id?: string) => {
+    const path = page === 'artwork' && id ? `/artwork/${id}` : pageToPath[page];
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+    }
+    setCurrentPage(page);
+  };
+
   const handleNavigate = (page: string, id?: string) => {
     if (page === 'login') {
       setAuthMode('login');
@@ -80,11 +145,11 @@ function AppContent() {
     
     if (page === 'artwork' && id) {
       setSelectedArtworkId(id);
-      setCurrentPage('artwork');
+      navigateTo('artwork', id);
       return;
     }
     
-    setCurrentPage(page as Page);
+    navigateTo(page as Page);
     if (page !== 'artwork') {
       setSelectedArtworkId(null);
     }
@@ -98,13 +163,13 @@ function AppContent() {
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setTimeout(() => {
-      setCurrentPage('home'); // Redirect to home after login
+      navigateTo('home'); // Redirect to home after login
     }, 500);
   };
 
   const handleLogout = () => {
     signOut();
-    setCurrentPage('home'); // Redirect to home after logout
+    navigateTo('home'); // Redirect to home after logout
   };
 
   if (authLoading || artworksLoading) {
@@ -120,6 +185,67 @@ function AppContent() {
       </div>
     );
   }
+
+  const seoForPage = (): { title?: string; description?: string; path?: string; image?: string; type?: 'website' | 'article' | 'product' } => {
+    switch (currentPage) {
+      case 'home':
+        return { title: 'Home', description: 'Discover hand-painted fabrics, oil paintings, and handcrafts.', path: '/' };
+      case 'gallery':
+        return { title: 'Gallery', description: 'Browse all artworks across categories.', path: '/gallery' };
+      case 'fabric':
+        return { title: 'Fabric Painting Gallery', description: 'Hand-painted fabrics: dupattas, sarees, suits and more.', path: '/gallery/fabric' };
+      case 'oil':
+        return { title: 'Oil Paintings', description: 'Original oil paintings for your home and office.', path: '/gallery/oil' };
+      case 'handcraft':
+        return { title: 'Handcraft', description: 'Unique handcrafted items made with love.', path: '/gallery/handcraft' };
+      case 'skin-care':
+        return { title: 'Skin Care', description: 'Natural skincare and oils available in the shop.', path: '/gallery/skin-care' };
+      case 'services':
+        return { title: 'Services', description: 'Custom fabric painting with optional professional stitching.', path: '/services' };
+      case 'custom-order':
+        return { title: 'Custom Order', description: 'Start your custom fabric painting order with Brush n Blends.', path: '/custom-order' };
+      case 'about':
+        return { title: 'About', description: 'Learn about Brush n Blends and our mission.', path: '/about' };
+      case 'contact':
+        return { title: 'Contact', description: 'Get in touch for commissions and inquiries.', path: '/contact' };
+      case 'privacy':
+        return { title: 'Privacy Policy', description: 'How we handle your data and privacy.', path: '/privacy' };
+      case 'terms':
+        return { title: 'Terms of Service', description: 'The rules and terms for using our site.', path: '/terms' };
+      case 'cookies':
+        return { title: 'Cookie Policy', description: 'Information about cookies used on our site.', path: '/cookies' };
+      case 'shipping':
+        return { title: 'Shipping Info', description: 'Shipping timelines, carriers, and charges.', path: '/shipping' };
+      case 'returns':
+        return { title: 'Returns & Exchanges', description: 'Our return and exchange policy.', path: '/returns' };
+      case 'size-guide':
+        return { title: 'Size Guide', description: 'Measurement and sizing guide for tailored outfits.', path: '/size-guide' };
+      case 'care-instructions':
+        return { title: 'Care Instructions', description: 'How to care for hand-painted fabrics and art.', path: '/care-instructions' };
+      case 'faq':
+        return { title: 'FAQ', description: 'Frequently asked questions about orders and products.', path: '/faq' };
+      case 'track-order':
+        return { title: 'Track Order', description: 'Track the status of your order.', path: '/track-order' };
+      case 'cart':
+        return { title: 'Your Cart', description: 'Review items in your shopping cart.', path: '/cart' };
+      case 'checkout':
+        return { title: 'Checkout', description: 'Secure checkout for your purchase.', path: '/checkout' };
+      case 'artwork': {
+        const art = artworks.find(a => a.id === selectedArtworkId);
+        return {
+          title: art ? art.title : 'Artwork',
+          description: art?.description || 'View artwork details and purchase options.',
+          path: art ? `/artwork/${art.id}` : '/artwork',
+          image: art?.images?.[0],
+          type: 'product'
+        };
+      }
+      default:
+        return { title: 'Brush n Blends', description: 'Handcrafted Indian art, fabric painting, oil paintings, and more.', path: '/' };
+    }
+  };
+
+  const { title, description, path, image, type } = seoForPage();
 
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -184,6 +310,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO title={title} description={description} path={path} image={image} type={type} />
       <Header 
         currentPage={currentPage} 
         onNavigate={handleNavigate} 

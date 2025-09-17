@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Disallow admin-only pages
+Disallow: /admin
+Disallow: /profile
+
+Sitemap: /sitemap.xml 
